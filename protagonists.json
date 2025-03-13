@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Captain Elias Vorne",
+    "role": "Aging spaceship commander",
+    "characteristics": "Cynical, laser-scarred face, whiskey voice",
+    "backstory": "Former war hero now hauling illegal cargo to pay medical debts"
+  },
+  {
+    "name": "Zera-7",
+    "role": "Experimental android",
+    "characteristics": "Golden ocular implants, emotion chip malfunction",
+    "backstory": "Prototype that gained sentience and destroyed its creators"
+  },
+  {
+    "name": "Dr. Lin Marakos",
+    "role": "Rogue xenobiologist",
+    "characteristics": "Always wears environmental suit, tremor in left hand",
+    "backstory": "Sole survivor of first contact disaster that wiped out her colony"
+  }
+]
