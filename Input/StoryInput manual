@@ -1,0 +1,98 @@
+"""
+User Manual for StoryInput.py
+
+Overview:
+The StoryInput.py script is designed to read and print the contents of three JSON files: 
+description.json, characters.json, and goals.json. These files contain information about a 
+story, including its description, characters, and goals.
+
+JSON File Structure:
+
+1. description.json
+   This file contains the story description and metadata. It is structured as a JSON array 
+   with a single object containing the following fields:
+   - userName: The name of the user who provided the story description.
+   - timeStamp: A timestamp indicating when the story description was recorded.
+   - storyDescription: A brief description of the story.
+
+   Example:
+   [
+       {
+           "userName": "test user",
+           "timeStamp": "1743027512",
+           "storyDescription": "The One-Armed Cowboy"
+        }
+    ]
+
+    
+
+2. characters.json
+   This file contains information about the characters in the story. It is structured as a 
+   JSON array with multiple objects. The first object contains metadata, and subsequent 
+   objects contain character details:
+   - userName: The name of the user who provided the character information.
+   - timeStamp: A timestamp indicating when the character information was recorded.
+   - checker: A flag indicating whether character information is present ("YES" or "NO").
+
+   For each character:
+   - name: The name of the character.
+   - role: The role of the character in the story.
+   - description: A brief description of the character.
+
+   Example:
+   [
+       {
+           "userName": "test user",
+           "timeStamp": "1743027512",
+           "checker": "YES"
+       },
+       {
+           "name": "John Wayne",
+           "role": "Cowboy",
+           "description": "One-Armed Cowboy"
+       }
+   ]
+
+3. goals.json
+   This file contains the goals or checkpoints for the story. It is structured as a JSON 
+   array with multiple objects. The first object contains metadata, and subsequent objects 
+   contain goal descriptions:
+   - userName: The name of the user who provided the goal information.
+   - timeStamp: A timestamp indicating when the goal information was recorded.
+   - checker: A flag indicating whether goal information is present ("YES" or "NO").
+
+   For each goal:
+   - goal_n: A description of the goal, where n is the goal number.
+
+   Example:
+   [
+       {
+           "userName": "test user",
+           "timeStamp": "1743027512",
+           "checker": "YES"
+       },
+       {
+           "goal_1": "Defeat the evil white cowboy"
+       },
+       {
+           "goal_2": "Rest in peace"
+       }
+   ]
+
+Running the Script:
+1. Prepare the JSON Files: Ensure that description.json, characters.json, and goals.json 
+   are correctly formatted and located in the same directory as StoryInput.py.
+
+2. Execute the Script: Run the script using a Python interpreter. The script will load and 
+   print the contents of the three JSON files.
+
+   python3 StoryInput.py
+
+3. Output: The script will display the contents of each JSON file in a readable format, 
+   allowing you to verify the data.
+
+Notes:
+- Ensure that the JSON files are correctly formatted to avoid errors during execution.
+- The script assumes that the JSON files are located in the same directory as StoryInput.py. 
+  Adjust the file paths in the script if necessary.
+"""
