@@ -6,6 +6,14 @@ import re
 
 HISTORY_FILE = "history.json"
 PROTAGONISTS_FILE = "protagonists.json"
+MODEL_NAME = "llama3-8b-8192"
+
+
+def get_client():
+    return OpenAI(
+        api_key="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",
+        base_url="https://api.groq.com/openai/v1"
+    )
 
 
 def save_to_history(story_text, user_input, uer_input_analysis = ""):
@@ -123,10 +131,7 @@ def update_protagonists(new_characters):
 
 def parse_new_characters(story_text):
     """Extract new characters from story text using LLM"""
-    client = OpenAI(
-        api_key="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",
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = get_client()
 
     prompt = f"""Analyze this story segment and extract any NEW important characters:
     
@@ -141,7 +146,7 @@ def parse_new_characters(story_text):
 
     try:
         response = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model=MODEL_NAME,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             response_format={"type": "json_object"}
@@ -153,10 +158,7 @@ def parse_new_characters(story_text):
 
 
 def run_mode2():
-    client = OpenAI(
-        api_key="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",
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = get_client()
 
     last_segment = get_last_story_segment()
     if not last_segment:
@@ -194,7 +196,7 @@ def run_mode2():
 
         try:
             response = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model=MODEL_NAME,
                 messages=[
                     {"role": "system", "content": "Expert serial fiction writer"},
                     {"role": "user", "content": system_prompt}
@@ -233,7 +235,7 @@ def run_mode2():
             }}"""
 
             response = client.chat.completions.create(
-                model="llama3-8b-8192",
+                model=MODEL_NAME,
                 messages=[{"role": "user", "content": goal_checking_prompt}],
                 temperature=0.3,
                 response_format={"type": "json_object"}
@@ -266,10 +268,7 @@ def run_mode2():
 
 
 def run_mode1():
-    client = OpenAI(
-        api_key="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",
-        base_url="https://api.groq.com/openai/v1"
-    )
+    client = get_client()
 
     # Get story elements
     genre = input("Enter genre: ").strip()
@@ -296,7 +295,7 @@ Create an engaging narrative that:
 
     try:
         response = client.chat.completions.create(
-            model="llama3-8b-8192",
+            model=MODEL_NAME,
             messages=[
                 {"role": "system",
                     "content": "Award-winning writer specializing in episodic fiction"},
