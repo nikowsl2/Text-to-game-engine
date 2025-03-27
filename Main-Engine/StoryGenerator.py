@@ -8,12 +8,13 @@ HISTORY_FILE = "history.json"
 PROTAGONISTS_FILE = "protagonists.json"
 
 
-def save_to_history(story_text, user_input):
+def save_to_history(story_text, user_input, uer_input_analysis = ""):
     """Save FULL generated story to history file"""
     entry = {
         "time": time.time(),
         "user_input": user_input,
-        "story_segment": story_text
+        "story_segment": story_text,
+        "uer_input_analysis": uer_input_analysis
     }
 
     if not os.path.exists(HISTORY_FILE):
@@ -78,6 +79,23 @@ def get_last_story_segment():
             return history[-1]['story_segment']
     except Exception as e:
         print(f"Error loading history: {str(e)}")
+        return None
+
+
+def get_goal():
+    try:
+        with open(HISTORY_FILE, 'r') as f:
+            history = json.load(f)
+            if not history:
+                return None
+            user_input = history[0].get("user_input", "")
+            for part in user_input.split(", "):
+                if part.startswith("Goal:"):
+                    goal = part.split("Goal:")[1].strip()
+                    break
+            return goal
+    except Exception as e:
+        print(f"Error loading goal from history: {str(e)}")
         return None
 
 
@@ -147,8 +165,12 @@ def run_mode2():
 
     characters = load_characters()
     char_summary = format_characters(characters)
+    goal = get_goal()
+    turn = 0
 
     while True:
+        turn += 1
+        print(f"\n=== Turn {turn} ===")
         continuation_prompt = input(
             "Next story direction (or 'stop generation'): ")
         if continuation_prompt.lower() == 'stop generation':
@@ -187,7 +209,41 @@ def run_mode2():
             new_segment = re.sub(r"\(.*?\)", "", new_segment)
             print(new_segment)
 
-            save_to_history(new_segment, continuation_prompt)
+            # Check if action aligns with goal
+            goal_checking_prompt = f"""Analyze the player's action in relation to the goal.
+
+            Current Story Segment:
+            {last_segment}
+
+            Player's Action:
+            {continuation_prompt}
+
+            Goal of the Story:
+            {goal}
+
+            Determine:
+            - If the action progresses towards the goal
+            - If the action leads to failure (game over)
+            - If the action achieves the goal (win)
+            
+            Respond in JSON format:
+            {{
+                "status": "progress" | "game_over" | "win",
+                "reason": "Brief explanation"
+            }}"""
+
+            response = client.chat.completions.create(
+                model="llama3-8b-8192",
+                messages=[{"role": "user", "content": goal_checking_prompt}],
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+
+            result = json.loads(response.choices[0].message.content)
+            status = result.get("status", "progress")
+            reason = result.get("reason", "")
+
+            save_to_history(new_segment, continuation_prompt, reason)
             new_chars = parse_new_characters(new_segment)
             update_protagonists(new_chars)
 
@@ -195,6 +251,15 @@ def run_mode2():
             if new_chars:
                 characters.extend(new_chars)
                 char_summary = format_characters(characters)
+
+            if status == "game_over":
+                print(f"\n❌ Game Over: {reason}")
+                break
+            elif status == "win":
+                print(f"\n🎉 You Win! {reason}")
+                break
+            else:
+                print(f"\n✅ Progress: {reason}")
 
         except Exception as e:
             print(f"\nGeneration error: {str(e)}")
@@ -209,6 +274,7 @@ def run_mode1():
     # Get story elements
     genre = input("Enter genre: ").strip()
     storyline = input("Enter story setup: ").strip()
+    goal = input("Enter story goal (what the protagonist must achieve): ").strip()
 
     # Load characters from JSON
     characters = load_characters()
@@ -244,7 +310,7 @@ Create an engaging narrative that:
         print("\nHere's your ongoing story:\n")
         print(full_story)
 
-        user_input = f"Genre: {genre}, Storyline: {storyline}"
+        user_input = f"Genre: {genre}, Storyline: {storyline}, Goal: {goal}"
         save_to_history(full_story, user_input)
         run_mode2()
 
