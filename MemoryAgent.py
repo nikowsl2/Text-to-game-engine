@@ -1,4 +1,5 @@
 import chromadb
+import datetime
 import re       #For converting the character names. Not really necessary.
 import textwrap #For breaking up the story text into chunks.
 
@@ -53,47 +54,64 @@ story_text = 'As I entered the dingy spaceport tavern, the smoke-filled air clun
 'mine with an unnerving intensity. And I knew, in that moment, I was in over my head.'
 
 #Story_Collection Example
-def add_story_passage():
-    story_collection = client.get_or_create_collection(name="story_collection")
+# def add_story_passage():
+#     story_collection = client.get_or_create_collection(name="story_collection")
 
-    storyPassageId = 1
-    storyIdFormatted = "{:04d}".format(storyPassageId)
+#     storyPassageId = 1
+#     storyIdFormatted = "{:04d}".format(storyPassageId)
 
-    #Break down the story passages if they are too long
+#     #Break down the story passages if they are too long
+#     chunk_size = 300
+#     story_chunks = textwrap.wrap(story_text, chunk_size)
+
+#     # Add each chunk separately to enable partial retrieval
+#     for i, chunk in enumerate(story_chunks):
+#         chunk_id = f"{storyIdFormatted}_chunk{i}"
+#         embedding = embedding_model.encode(chunk).tolist()
+
+#         story_collection.add(
+#             ids=[chunk_id],
+#             embeddings=[embedding],
+#             metadatas=[{
+#                 "story_id": storyIdFormatted,
+#                 "chunk_index": i,
+#                 # "characters": characters,
+#                 # "location": location,
+#                 # "tags": tags
+#             }],
+#             documents=[chunk]  # Store text for reference
+#         )
+
+#     query_text = "A high-risk job involving a rogue android"
+#     query_embedding = embedding_model.encode(query_text).tolist()
+
+#     #Query is similar to running a SQL select operation. See https://docs.trychroma.com/docs/querying-collections/full-text-search
+#     results = story_collection.query(
+#         query_embeddings=[query_embedding],
+#         n_results=2  # Retrieve the top 2 most similar story sections
+#     )
+
+#     print("Search Results:", results)    
+
+#Implementation of add_story_passage as it might be implemented in the story generator agent.
+def add_story_passage(story_passage, story_collection):
+    # story_collection = client.get_or_create_collection(name="story_collection")
+    timeStamp = utility_generateDatetimeStr()
+    storyPassageId = timeStamp
     chunk_size = 300
-    story_chunks = textwrap.wrap(story_text, chunk_size)
+    story_chunks = textwrap.wrap(story_passage, chunk_size)
 
     # Add each chunk separately to enable partial retrieval
     for i, chunk in enumerate(story_chunks):
-        chunk_id = f"{storyIdFormatted}_chunk{i}"
+        chunk_id = f"{storyPassageId}_chunk{i}"
         embedding = embedding_model.encode(chunk).tolist()
 
-        story_collection.add(
-            ids=[chunk_id],
-            embeddings=[embedding],
-            metadatas=[{
-                "story_id": storyIdFormatted,
-                "chunk_index": i,
-                # "characters": characters,
-                # "location": location,
-                # "tags": tags
-            }],
-            documents=[chunk]  # Store text for reference
+        story_collection.add_memory(
+            chunk_id, 
+            chunk,
+            embedding,
+            {"story_id": storyPassageId, "chunk_index" : i}
         )
-
-    query_text = "A high-risk job involving a rogue android"
-    query_embedding = embedding_model.encode(query_text).tolist()
-
-    #Query is similar to running a SQL select operation. See https://docs.trychroma.com/docs/querying-collections/full-text-search
-    results = story_collection.query(
-        query_embeddings=[query_embedding],
-        n_results=2  # Retrieve the top 2 most similar story sections
-    )
-
-    print("Search Results:", results)    
-
-def add_story_passage_v2():
-    pass
 
 # NPC_Collection Example
 def add_npc():
@@ -114,6 +132,24 @@ def add_npc():
             documents=embedding_text
         )
 
+def utility_generateDatetimeStr():
+    # Get current date and time
+    now = datetime.datetime.now()
+    
+    # Extract components
+    yy = now.year % 100  # Last two digits of year
+    mm = now.month
+    dd = now.day
+    hh = now.hour
+    min = now.minute
+    ss = now.second
+    
+    # Format as yymmddhhmmss
+    formatted = f"{yy:02d}{mm:02d}{dd:02d}{hh:02d}{min:02d}{ss:02d}"
+    
+    # Convert to integer
+    return int(formatted)
+
 class MemoryAgent:
     def __init__(self, collection_name="my_collection", 
                  embedding_model=embedding_functions.DefaultEmbeddingFunction()):
@@ -126,15 +162,16 @@ class MemoryAgent:
             name=collection_name            
         )
 
-    def add_memory(self, item_id: str, content: str, metadata: dict = None):
+    def add_memory(self, item_id: str, content: str, embeddings: list, metadata: dict = None):
         """
         Adds a new piece of memory (text + metadata) to the collection.
         Each memory item has a unique item_id used for future retrieval or updates.
         """
         self.collection.add(
+            ids=[item_id],
             documents=[content],
-            metadatas=[metadata if metadata else {}],
-            ids=[item_id]
+            embeddings=embeddings,
+            metadatas=[metadata if metadata else {}],            
         )
 
         if B_DEBUG_MODE:
@@ -172,8 +209,10 @@ class MemoryAgent:
         Retrieves the most relevant documents from the collection
         based on the provided query text, returning up to n_results items.
         """
+        query_embedding = self.embed_fn.encode(query).tolist()
+
         results = self.collection.query(
-            query_texts=[query],
+            query_embeddings=[query_embedding],
             n_results=n_results
         )
 
@@ -207,5 +246,10 @@ if __name__ == "__main__":
    
    story_collection = MemoryAgent(collection_name="story_collection", embedding_model=embedding_model)
    npc_collection = MemoryAgent(collection_name="npc_collection", embedding_model=embedding_model)
+
+   add_story_passage(story_text, story_collection)
+
+   query_text = "A high-risk job involving a rogue android"
+   memory = story_collection.retrieve_memory(query_text, 2)
 
    print("Hello World")
