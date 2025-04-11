@@ -74,7 +74,7 @@ class MemoryAgent:
             name=collection_name            
         )
 
-    def add_memory(self, item_id: str, content: str, embeddings: list, metadata: dict = None):
+    def add_memory(self, item_id: str, embeddings: list,  content: str = None, metadata: dict = None):
         """
         Adds a new piece of memory (text + metadata) to the collection.
         Each memory item has a unique item_id used for future retrieval or updates.
@@ -176,6 +176,7 @@ class StoryAgent(MemoryAgent):
                  chunk_size=300,
                  summarization_model="facebook/bart-large-cnn"):
         super().__init__(collection_name=collection_name, embedding_model=embedding_model)
+
         self.chunk_size = chunk_size        
         self.summarizer = pipeline("summarization", model=summarization_model)
         self.summarizer_min_length = 100
@@ -244,14 +245,10 @@ class StoryAgent(MemoryAgent):
             chunk_text = " ".join(cluster_sents)
             print(f"--- Cluster {cluster_id} ---\n{chunk_text}\n")
 
-    def dev_extract_scene_beats_with_llm(self, story_passage):
+    def old_extract_story_segment(self, story_passage):
         """
         Uses an LLM (via the OpenAI API) to parse a story passage into major scene beats.
-        You can adapt the prompt or parameters as needed for your specific use case.
         
-        :param text: The story passage to be chunked.
-        :param api_key: Your OpenAI API key. If None, will use os.environ["OPENAI_API_KEY"].
-        :param model: The OpenAI Chat model to use, e.g. 'gpt-3.5-turbo' or 'gpt-4'.
         :return: A list of scene beat descriptions from the LLM.
         # """
         model = "llama3-70b-8192"
@@ -262,18 +259,22 @@ class StoryAgent(MemoryAgent):
 
         # Construct a system or user prompt instructing the model to identify major scene beats
         prompt = f"""
-            You are an expert story analyst. Given the following story segment,
+            You are an expert literary analyst. Given the following story segment,
             extract structured JSON data. Follow these rules:
 
             **Sections to Extract**:
-            1. **Characters**: Include their appearance, traits, role, and relationships.
+            1. **Characters**: Include their appearance, traits, role, personality, and relationships.
             2. **Key Events**: Short summaries with plot-relevant tags.
             3. **Setting & Atmosphere**: Physical environment and mood.
+            4. **Setting Facts**: What is true in the world.
+            5. **Setting Constraints**: What actions are allowed or forbidden.
 
             **Format**:
             - Use `snake_case` for IDs (e.g., "captain_elias_vorne").
-            - Only include details explicitly mentioned in the text.
+            - Maintain consistent snake_case IDs for cross-referencing           
+            - Include atmospheric cues as mood tags
             - Never invent new information.
+            - Limit event descriptions to 15 words
 
             **Example Output**:
             {{
@@ -283,6 +284,7 @@ class StoryAgent(MemoryAgent):
                         "type": "character",
                         "attributes": {{
                             "appearance": "laser-scarred face",
+                            "personality": "serious, stoic",
                             "role": "guild representative",
                             "relationships": ["other_character_id"]
                         }}
@@ -302,6 +304,18 @@ class StoryAgent(MemoryAgent):
                     "description": "Dingy spaceport tavern",
                     "mood": "tense, gritty"
                 }}
+                "setting_facts": [
+                    {{
+                        "id" : "fact_id",
+                        "fact" : "Door is locked"
+                    }}
+                ],
+                "setting_constraints": [
+                    {{
+                        "id" : "constraint_id",
+                        "constaint" : "Cannot enter cave without torch"
+                    }}
+                ],                
             }}
 
             **Story Segment**:
@@ -317,7 +331,6 @@ class StoryAgent(MemoryAgent):
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.2,
-                # max_tokens=500,
                 response_format={"type": "json_object"}             
             ) 
 
@@ -327,7 +340,133 @@ class StoryAgent(MemoryAgent):
             print("Prompt operation failed")
 
         return segments
+    
+    def dev_extract_story_segment(self, story_passage):
+        model = "llama3-70b-8192"
+        client = openai.OpenAI(
+            api_key="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",
+            base_url="https://api.groq.com/openai/v1"            
+        )
+
+        constraints = [
+            "Use only explicit information from the text",
+            "Maintain consistent snake_case IDs for cross-referencing",
+            "Include atmospheric cues as mood tags",
+            "Limit event descriptions to 15 words",
+            "Never invent details not present in the text"
+        ]
+
+        prompt_template = {
+        "task": "Analyze the provided story segment and extract structured data in JSON format.",
+        "requirements": {
+            "output_sections": ["characters", "key_events", "setting_atmosphere"],
+                "format": {
+                "characters": {
+                    "fields": [
+                    "id (lowercase_snake_case)",
+                    "type: 'character'",
+                    "attributes: {appearance, personality/traits, role, relationships, backstory (if mentioned)}"
+                    ]
+                },
+                "key_events": {
+                    "fields": [
+                    "id (lowercase_snake_case)",
+                    "type: 'event'", 
+                    "description (1-sentence summary)",
+                    "tags (plot-relevant keywords)"
+                    ]
+                },
+                "setting_atmosphere": {
+                    "fields": [
+                    "id (lowercase_snake_case)",
+                    "type: 'setting'",
+                    "description (physical environment)",
+                    "mood (emotional tone)"
+                    ]
+                }
+            }
+        },
+        "examples": {
+            "input_sample": "\"Captain Elias Vorne growled... risk is high.\"",
+            "output_sample": {
+            "characters": [{
+                "id": "captain_elias_vorne",
+                "type": "character",
+                "attributes": {
+                "appearance": "laser-scarred face, whiskey-roughened voice",
+                "personality": "battle-hardened, calculating",
+                "role": "offers risky transport job",
+                "relationships": ["zera7"]
+                }
+            }]
+            }
+        },
+        "constraints": constraints,
+        "input_story": story_passage
+        }
+
+        json_prompt_string = json.dumps(prompt_template)
+        segments = None
+
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a helpful AI that formats data as requested."
+            },
+            {
+                # We embed our JSON as a 'user' message,
+                # or we could add it as a system message—depends on your use case.
+                "role": "user",
+                "content": f"JSON Prompt:\n{json_prompt_string}"
+            }
+        ]
+
+        try: 
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.3,
+                response_format={"type": "json_object"}             
+            ) 
+
+            segments = json.loads(response.choices[0].message.content)
+            return segments
+
+        except Exception as e:
+            print("Prompt operation failed")
+            return None
         
+    def add_story_metadata(self, json_data):
+        # timeStamp = self.utility_generateDatetimeStr()
+        # storyPassageId = timeStamp
+
+        key_events = json_data["key_events"]
+        setting_atmosphere = json_data["setting_atmosphere"]
+
+        for entry in key_events:
+            embed_str = entry["description"]
+            embedding = embedding_model.encode(embed_str).tolist()
+
+            self.add_memory(
+                item_id=entry["id"], 
+                embeddings=embedding,
+                metadata={
+                    "type": entry["type"], 
+                    "description": entry["description"],
+                    "tags": entry["tags"]
+                } #Add additional metadata if need be.
+            )
+
+        self.add_memory(
+            item_id=setting_atmosphere["id"],
+            embedding = embedding_model.encode(setting_atmosphere["description"]).tolist(),
+            metadata={
+                "type": setting_atmosphere["type"], 
+                "description": setting_atmosphere["description"],
+                "mood": setting_atmosphere["tags"]
+            } #Add additional metadata if need be.            
+        )
+
 class NPCAgent(MemoryAgent):
     def __init__(self, 
                 collection_name="my_collection", 
@@ -336,8 +475,6 @@ class NPCAgent(MemoryAgent):
 
     
     def add_npc(self, npc_entries):
-        # npc_collection = client.get_or_create_collection(name="npc_collection")
-
         for entity in npc_entries:
             embedding_text = f"{entity['role']}. {entity['characteristics']}. {entity['backstory']}"
             embedding = embedding_model.encode(embedding_text)
@@ -355,10 +492,6 @@ class NPCAgent(MemoryAgent):
                 }]
             )
 
-    def dev_extractNPCActions(self, story_passage):
-        pass
-
-
 if __name__ == "__main__":
    transfomer_model = "all-MiniLM-L6-v2" #Comes default with SentenceTransformer. However, other models can be used.
    db_path = "./chroma_db"
@@ -367,19 +500,20 @@ if __name__ == "__main__":
    client = chromadb.PersistentClient(path=db_path)  # Stores data on disk. There is a HttpsClient available to allow for client/server operations.
    embedding_model = SentenceTransformer(transfomer_model)  # Loaded from Hugging Face.
 
-#    nltk.download('punkt_tab')
-
    if not B_PERSIST_ENTRIES:
     collections = client.list_collections()
     for collection in collections:
         client.delete_collection(collection)
 
    story_collection = StoryAgent(collection_name="story_collection", embedding_model=embedding_model)
+   segment_components = story_collection.dev_extract_story_segment(story_text)
+   story_collection.add_story_metadata(segment_components)
+
 #    story_collection.add_story_passage(story_text)
 
 #    story_collection.summarize_passage(story_text)
 #    story_collection.dev_cluster_example(story_text)
-   story_collection.dev_extract_scene_beats_with_llm(story_text)
+   
 
    npc_collection = MemoryAgent(collection_name="npc_collection", embedding_model=embedding_model)
 
