@@ -9,12 +9,12 @@ GPT_api_key = "sk-proj-F88MlAMEzf6gROt6XXoflt8u2g82VxgJufiX7PCcumu_QCOKZ666EaodI
 Deepseek_api_key = "sk-edbde6ec754a48dba8bf6d3531985d70"
 
 
-def create_char():
+def create_char(num):
     char_prompt = {}
 
     # Create the main window
     root = tk.Tk()
-    root.title("Character creation")
+    root.title(f"Character creation: CHaracter number {num}")
     root.geometry("1280x720")
 
 

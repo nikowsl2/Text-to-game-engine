@@ -213,7 +213,7 @@ def run_mode1():
         root.destroy()
         for i in range(num_char):
             try:
-                npc = create_char()
+                npc = create_char(i)
                 DATA["chars"][npc["name"]] = npc
             except Exception as e:
                 messagebox.showerror("Error", f"Character creation failed: {str(e)}")
