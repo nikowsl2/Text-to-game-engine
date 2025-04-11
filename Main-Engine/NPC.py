@@ -15,7 +15,7 @@ def create_char():
     # Create the main window
     root = tk.Tk()
     root.title("Character creation")
-    root.geometry("960x600")
+    root.geometry("1280x720")
 
 
     name_label = tk.Label(root, text="What is the name of your character?")
@@ -25,17 +25,17 @@ def create_char():
 
     bg_label = tk.Label(root, text="please provide a brief description of the background of your character:")
     bg_label.pack(pady=2)
-    bg_box = tk.Entry(root, width=100)
+    bg_box = tk.Text(root, width=100, height=2)
     bg_box.pack(pady=8)
 
     act_label = tk.Label(root, text="please describe how you would like your character acts (mannerisms and traits):")
     act_label.pack(pady=2)
-    act_box = tk.Entry(root, width=100)
+    act_box = tk.Text(root, width=100, height=2)
     act_box.pack(pady=8)
 
     info_label = tk.Label(root, text="What information does your character know?")
     info_label.pack(pady=2)
-    info_box = tk.Entry(root, width=100)
+    info_box = tk.Text(root, width=100, height=2)
     info_box.pack(pady=8)
 
     init_label = tk.Label(root,
@@ -46,38 +46,38 @@ def create_char():
 
     hello_label = tk.Label(root, text="how would your character respond to the following: \"Hello, how did you spend your day?\" ")
     hello_label.pack(pady=2)
-    hello_box = tk.Entry(root, width=100)
+    hello_box = tk.Text(root, width=100, height=2)
     hello_box.pack(pady=8)
 
     imp_label = tk.Label(root, text="how would your character respond to the following: \"What is the most important thing in the world to you?\" ")
     imp_label.pack(pady=2)
-    imp_box = tk.Entry(root, width=100)
+    imp_box = tk.Text(root, width=100, height=2)
     imp_box.pack(pady=8)
 
     help_label = tk.Label(root, text="how would your character respond to the following: \"Can you help me with something?\" ")
     help_label.pack(pady=2)
-    help_box = tk.Entry(root, width=100)
+    help_box = tk.Text(root, width=100, height=2)
     help_box.pack(pady=8)
 
     note_label = tk.Label(root, text="What else you would like to add about your character that has not yet been covered?")
     note_label.pack(pady=2)
-    note_box = tk.Entry(root, width=100)
+    note_box = tk.Text(root, width=100, height=2)
     note_box.pack(pady=8)
 
     # Function to handle button click
     def on_submit():
         char_prompt['name'] = name_box.get()
 
-        char_prompt["background"] = bg_box.get()
-        char_prompt["act"] = act_box.get()
-        char_prompt["info"] = info_box.get()
+        char_prompt["background"] = bg_box.get("1.0", "end-1c")
+        char_prompt["act"] = act_box.get("1.0", "end-1c")
+        char_prompt["info"] = info_box.get("1.0", "end-1c")
         char_prompt["init"] = init_box.get()
 
-        char_prompt["q_hello"] = hello_box.get()
-        char_prompt["q_important"] = imp_box.get()
-        char_prompt["q_help"] = help_box.get()
+        char_prompt["q_hello"] = hello_box.get("1.0", "end-1c")
+        char_prompt["q_important"] = imp_box.get("1.0", "end-1c")
+        char_prompt["q_help"] = help_box.get("1.0", "end-1c")
 
-        char_prompt["notes"] = note_box.get()
+        char_prompt["notes"] = note_box.get("1.0", "end-1c")
 
         root.destroy()
     # Submit button
@@ -88,20 +88,20 @@ def create_char():
     return char_prompt
 
 
-def get_initial_prompt(char_prompt):
+def get_initial_prompt(data, char_name):
     return (f"Please continue this conversation acting as a character with the following details: \n"
-            f"Your name is: {char_prompt['name']}\n"
-            f"Your have the following background: {char_prompt['background']} \n"
-            f"You behave in this way: {char_prompt['act']}\n"
-            f"The only information you know is: {char_prompt['info']}. You do not know anything beyond the mentioned scope \n"
+            f"Your name is: {char_name}\n"
+            f"Your have the following background: {data['chars'][char_name]['background']} \n"
+            f"You behave in this way: {data['chars'][char_name]['act']}\n"
+            f"The only information you know is: {data['chars'][char_name]['info']}. You do not know anything beyond the mentioned scope \n"
             f"Here are some examples of inputs and how you should respond:\n"
             f"Input: \"Hello, how did you spend your day?\"\n"
-            f"Response: {char_prompt['q_hello']}\n"
+            f"Response: {data['chars'][char_name]['q_hello']}\n"
             "Input: \"What is the most important thing in the world to you?\"\n"
-            f"Response: {char_prompt['q_important']}\n"
+            f"Response: {data['chars'][char_name]['q_important']}\n"
             "Input: \"Can you help me with something?\"\n"
-            f"Response: {char_prompt['q_help']}\n"
-            f"And here is some more information about you: {char_prompt['notes']}\n"
+            f"Response: {data['chars'][char_name]['q_help']}\n"
+            f"And here is some more information about you: {data['chars'][char_name]['notes']}\n"
             )
 
 def get_dev_message(initial, hist):

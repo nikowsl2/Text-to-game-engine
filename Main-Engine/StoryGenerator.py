@@ -60,19 +60,26 @@ def load_characters():
         exit(1)
 
 
-def format_characters(characters):
+def format_characters(data):
     """Format character data for prompt"""
     return "\n".join(
-        f"- {char['name']} ({char['role']}): "
-        f"Characteristics: {char['characteristics']}. "
-        f"Backstory: {char['backstory']}"
-        for char in characters
+        f"""Character name: {data["chars"][i]['name']}
+        Character background: {data["chars"][i]['background']}
+        Character Behaviour: {data["chars"][i]['act']}
+        The only information the character knows is: {data["chars"][i]['info']}. The character does not know anything beyond the mentioned scope.
+        The character begins the story in the following state: {data["chars"][i]['init']} \n
+        """
+        for i in data["chars"]
     )
 
 
-def get_last_story_segment():
+def get_last_story_segment(data):
     """Retrieve the most recent story segment from history"""
-    try:
+    return "\n".join(
+        f"""{i[0]}: {i[1]}"""
+        for i in data["history"]
+    )
+    """try:
         with open(HISTORY_FILE, 'r') as f:
             history = json.load(f)
             if not history:
@@ -80,7 +87,7 @@ def get_last_story_segment():
             return history[-1]['story_segment']
     except Exception as e:
         print(f"Error loading history: {str(e)}")
-        return None
+        return None"""
 
 
 def get_goal():
@@ -149,66 +156,72 @@ def parse_new_characters(story_text):
         print(f"Character parsing failed: {str(e)}")
         return []\
 
-def story_generation(client):
+def story_generation(client, model_name, data, user_text):
 
     # Get story elements
-    genre = input("Enter genre: ").strip()
-    storyline = input("Enter story setup: ").strip()
-    goal = input("Enter story goal (what the protagonist must achieve): ").strip()
+    #genre = input("Enter genre: ").strip()
+    #storyline = input("Enter story setup: ").strip()
+    #goal = input("Enter story goal (what the protagonist must achieve): ").strip()
 
     # Load characters from JSON
-    characters = load_characters()
-    char_summary = format_characters(characters)
+    #characters = load_characters()
+    char_summary = format_characters(data)
 
-    system_prompt = f"""You are a creative writing professionals. Generate a 3-5 paragraph story that:
-    Genre: {genre}
-    Main Characters:
+    system_prompt = f"""You are a creative writing professional specializing in {data["story"]["genre"]} stories. \
+    The user will give you an in progress story and you will continue it in a manner that makes sense given the provided \
+    information and does not break continuity or violate any facts already established in the universe of the story.
+     
+    Your response:
+    1. Must respond directly to the action provided by the user
+    2. Must be between 1 to 4 sentences long. 1 or 2 sentences is preferable.
+    3. NOT generate any dialogue for the main character.
+    """
+
+    user_prompt = f"""Given the following story that is currently in progress, a cast of characters, and the most \
+    recent action by the main character, write a continuation to the story that happens as a response to the most recent \
+    action by the main character.
+    
+    Your response should:
+    1. Be between 1 to 4 sentences long. 1 or 2 sentences is preferable.
+    2. Maintain genre conventions
+    3. Use character backstory appropriately
+    4. NOT need to include all characters. ONLY include characters that would make sense given the most recent action.
+    5. NOT include suggestions, notes, or commentary
+    6. NOT generate dialogue for the main Character. That will be left up to the user.
+    7. Strictly avoid phrases like "could be continued" or "next chapter"
+    8. Never include out-of-story text in parentheses/brackets
+    
+    Here is the story so far:
+    {get_last_story_segment(data)}
+    
+    With this set of Non Player Characters:
     {char_summary}
 
-    Story Setup: {storyline}
+    Here is the most recent action by the main character that you are responding to:
+    {user_text}
 
-    Create an engaging narrative that:
-    - Builds tension but doesn't resolve completely
-    - Ends with a cliffhanger or unresolved situation
-    - Develops character relationships
-    - Maintains genre conventions
-    - Uses characters' backstories appropriately"""
+    """
 
     try:
         response = client.chat.completions.create(
-            model=MODEL_NAME,
+            model=model_name,
             messages=[
                 {"role": "system",
-                 "content": "Award-winning writer specializing in episodic fiction"},
-                {"role": "user", "content": system_prompt}
+                 "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             temperature=0.95,
             max_tokens=1200
         )
 
-        full_story = response.choices[0].message.content
-        print("\nHere's your ongoing story:\n")
-        print(full_story)
-
-        user_input = f"Genre: {genre}, Storyline: {storyline}, Goal: {goal}"
-        save_to_history(full_story, user_input)
-        run_mode2()
+        return response.choices[0].message.content
 
     except Exception as e:
         print(f"\nError: {str(e)}")
 
+
 def get_starting_prompt(data):
-    characters_string = ""
-    j = 1
-    for i in data["chars"]:
-        characters_string += f"""Character number {j}
-        Character name: {data["chars"][i]['name']}
-        Character background: {data["chars"][i]['background']}
-        Character Behaviour: {data["chars"][i]['act']}
-        The only information the character knows is: {data["chars"][i]['info']}. The character does not know anything beyond the mentioned scope.
-        The character begins the story in the following state: {data["chars"][i]['init']} \n
-        """
-        j += 1
+    characters_string = format_characters(data)
     return f"""Please generate the beginning of a story using the following parameters:
                 The genre is: {data["story"]["genre"]}
                 The goal of the main character is: {data["story"]["goal"]}
@@ -227,12 +240,13 @@ def get_initial_gen(client, model_name, prompt):
             information provided by the user to write the BEGINNING of a story with the following requirements.
             
             Requirements:
-            - Generate 2 to 3 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
+            - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
             - Builds tension but doesn't resolve completely
             - Ends with an open-ended situation that provides the user various options for their next action
             - Maintains genre conventions
             - Uses characters' backstories appropriately
             - NO suggestions, notes, or commentary
+            - DO NOT generate dialogue for the main Character. That will be left up to the user.
             - Strictly avoid phrases like "could be continued" or "next chapter"
             - Never include out-of-story text in parentheses/brackets
             - Maintain immersive storytelling only"""},
