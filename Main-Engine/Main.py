@@ -4,10 +4,15 @@ import os
 import time
 import re
 import tkinter as tk
+
+import NPC
+import MemoryAgent
+
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
 from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation
 
+B_DEBUG_MODE = True
 
 HISTORY_FILE = "history.json"
 PROTAGONISTS_FILE = "protagonists.json"
@@ -84,7 +89,7 @@ def classifier(client, user_input):
         stream=False
     )
 
-
+#Main Page
 def run_generation(beginning_line):
     # Create the main window
     root = tk.Tk()
@@ -99,6 +104,7 @@ def run_generation(beginning_line):
         font=("Arial", 12),
         wrap=tk.WORD,  # Wrap text at word boundaries
     )
+
     text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
     text.insert("1.0", f"{beginning_line}\n")
     text.config(state="disabled")
@@ -131,6 +137,7 @@ def run_generation(beginning_line):
             response = get_response(client, dv, user_text).choices[0].message.content
             DATA["history"].append(["User", user_text])
             DATA["history"].append([input_type, response])
+
         else:
             messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
         if response is not None:
@@ -160,9 +167,8 @@ def run_generation(beginning_line):
     # Run the application
     root.mainloop()
 
+#New Story Creation
 def run_mode1():
-
-
     root = tk.Tk()
     root.title("Story Creation")
     root.geometry("960x540")
@@ -224,11 +230,10 @@ def run_mode1():
         DATA["history"].append(["story", beginning_line])
         run_generation(beginning_line)
 
-
-
     next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
     next_button.pack(pady=10)
 
+#Load Story Creation - based on code from StoryGenerator.
 def run_mode2():
     root = tk.Tk()
     root.title("Story Creation")
@@ -255,46 +260,400 @@ def run_mode2():
     next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
     next_button.pack(pady=10)
 
-def main():
-    #print("✨ Story Generator ✨")
-    #print("1. Start New Story")
-    #print("2. Exiting")
+# def main():
+#     #print("✨ Story Generator ✨")
+#     #print("1. Start New Story")
+#     #print("2. Exiting")
 
-    root = tk.Tk()
-    root.title("Main Menu")
-    root.geometry("960x540")
+#     root = tk.Tk()
+#     root.title("Main Menu")
+#     root.geometry("960x540")
 
-    title_label = tk.Label(root, text="CSCI 544 Text To Game Engine", font=("Arial", 24))
-    title_label.pack(pady=80)
+#     title_label = tk.Label(root, text="CSCI 544 Text To Game Engine", font=("Arial", 24))
+#     title_label.pack(pady=80)
 
-    def run_1():
-        run_mode1()
-        root.destroy()
+#     def run_1():
+#         run_mode1()
+#         root.destroy()
 
-    def run_2():
-        run_mode2()
-        root.destroy()
+#     def run_2():
+#         run_mode2()
+#         root.destroy()
 
-    new_button = tk.Button(root, text="New Game", font=("Arial", 16), command=run_1, width=30, height=3)
-    new_button.pack(pady=10)
+#     new_button = tk.Button(root, text="New Game", font=("Arial", 16), command=run_1, width=30, height=3)
+#     new_button.pack(pady=10)
 
-    new_button = tk.Button(root, text="Load Game", font=("Arial", 16), command=run_2, width=30, height=3)
-    new_button.pack(pady=10)
+#     new_button = tk.Button(root, text="Load Game", font=("Arial", 16), command=run_2, width=30, height=3)
+#     new_button.pack(pady=10)
 
-    root.mainloop()
+#     root.mainloop()
 
-    """mode = input("\nSelect (1/2): ").strip()
+#     """mode = input("\nSelect (1/2): ").strip()
 
-    if mode == "1":
-        if os.path.exists(HISTORY_FILE):
-            os.remove(HISTORY_FILE)
-        run_mode1()
-    elif mode == "2":
-        if not os.path.exists(HISTORY_FILE) or not os.path.exists(PROTAGONISTS_FILE):
-            print("Required files missing! Start with Mode 1 first.")
-            return
-        run_mode2() """
+#     if mode == "1":
+#         if os.path.exists(HISTORY_FILE):
+#             os.remove(HISTORY_FILE)
+#         run_mode1()
+#     elif mode == "2":
+#         if not os.path.exists(HISTORY_FILE) or not os.path.exists(PROTAGONISTS_FILE):
+#             print("Required files missing! Start with Mode 1 first.")
+#             return
+#         run_mode2() """
 
+class AppEngine(tk.Tk):
+    """
+        Main App Engine. Holds the variables accessed by every page frame within the App.
+    """
+    def __init__(self, dlgResWidth=1280, dlgResHeight=960):
+        super().__init__()
+        self.title("CSCI 566 Text To Game Engine")
+        self.dlgResWidth = dlgResWidth
+        self.dlgResHeight = dlgResHeight
+        self.geometry(f"{self.dlgResWidth}x{self.dlgResHeight}")
+        self.debug_mode = B_DEBUG_MODE
+
+        #Note: All created frames have access to set/get values from json_data.
+        #Originally the DATA global var.
+        self.json_data = {
+            "chars": {},
+            "history": []
+        }
+        self.beginning_line = None
+        
+        # Create a container frame to hold all the pages
+        self.container = tk.Frame(self)
+        self.container.pack(side="top", fill="both", expand=True)
+        
+        # Configure grid layout to make sure the frame expands
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
+        
+        # Dictionary to hold the pages
+        self.frames = {}
+        
+        # Initialize and stack pages in the same location
+        for F in (MainInterface, PageNewStory, PageLoadStory):
+            page_name = F.__name__
+            frame = F(master=self.container, controller=self)
+            self.frames[page_name] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+            
+        # Show the master page first
+        self.show_frame("MainInterface")
+        
+    def show_frame(self, page_name):
+        """Bring the specified frame (page) to the front."""
+        frame = self.frames[page_name]
+        frame.tkraise()
+
+    def generateStartingPrompts(self):
+        prompt = get_starting_prompt(self.json_data)
+        beginning_line = get_response(client, MODEL_NAME, prompt).choices[0].message.content
+
+        self.json_data["target"] = "story"
+        self.json_data["history"].append(["story", beginning_line])
+        self.beginning_line = beginning_line
+
+    def initializePageNpc(self, num_npcs):
+        page_name = NPC.PageCreateNPC.__name__
+        frame = NPC.PageCreateNPC(master=self.container, controller=self, num_npcs=num_npcs)
+        self.frames[page_name] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
+
+    def initializePageGameInterface(self, beginning_line):
+        page_name = PageGameInterface.__name__
+        frame = PageGameInterface(master=self.container, controller=self, beginning_line=beginning_line)
+        self.frames[page_name] = frame
+        frame.grid(row=0, column=0, sticky="nsew")
+
+    def displayPageGameInterface(self):
+        self.initializePageGameInterface(self.beginning_line)
+        self.show_frame("PageGameInterface")
+
+    def classifier(self, client, user_input):
+        return client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": f"""You are a classifier. Your job is to determine the user's intent with his input."""},
+                {"role": "user", "content": f"""
+                        Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
+                If the user input is directed at the story generator, respond with \"story\".
+                If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
+                part of the following: {list(self.json_data["chars"].keys())}
+                
+                Here are a few examples:
+                Current conversation agent: story
+                User input: I walk down the hallway
+                Your response: story
+                You respond with story because the user is currently using the story agent and by issuing directions to progress the story they \
+                clearly wish to continue using the story agent
+                
+                Current conversation agent: John
+                User input: How was your day?
+                Your response: John
+                You respond with John as the user is currently conversing with John and the input is clearly directed at a character, meaning they desire to continue conversing with John
+                                
+                Context: the bartender's name is Chuck
+                Current conversation agent: story
+                User input: I approach the bartender
+                Your response: Chuck
+                You respond with Chuck as the user is currently using the story agent but clearly wishes to begin a conversation with the Bartender.\
+                You respond with Chuck because the bartender's name is Chuck, but if the bartender's name was John, you would respond with John.
+                
+                Current conversation agent: Chuck
+                User input: I get up from the bar and leave the room
+                Your response: story
+                You respond with story as while the user was previously conversing with Chuck, the direction clearly \
+                indicates that the user wishes leave the conversation and progress with the story agent.
+                                
+                Here is the current context that you are provided with:
+                Characters:
+                {format_characters(self.json_data)}
+                
+                Conversation History:
+                {get_last_story_segment(self.json_data)}
+                
+                Remember to respond ONLY with "story" or a character's name. Do not include any other information in the response.
+                Also remember that if you respond with a character's name, it MUST be included in the following list {list(self.json_data["chars"].keys())}.
+                DO NOT respond with a name not on the provided list. Your only valid responses are names from that list or "story".
+                
+                
+                The current conversation agent: {self.json_data["target"]}
+                User Input: {user_input}
+                """},
+            ],
+            stream=False
+        )        
+
+class MainInterface(tk.Frame):
+    """
+        The initial page that is displayed when starting up the game.
+    """
+    def __init__(self, master, controller):
+        super().__init__(master)
+        self.controller = controller
+        self.page_title_name = "CSCI 566 Text To Game Engine"
+    
+        title_label = tk.Label(self, text=self.page_title_name, font=("Arial", 24))
+        title_label.pack(pady=80)
+
+        new_button = tk.Button(self, text="New Game", font=("Arial", 16), 
+                               command=lambda: controller.show_frame("PageNewStory"), width=30, height=3)
+        new_button.pack(pady=10)
+
+        new_button = tk.Button(self, text="Load Game", font=("Arial", 16), 
+                               command=lambda: controller.show_frame("PageLoadStory"), width=30, height=3)
+        new_button.pack(pady=10)
+        
+class PageNewStory(tk.Frame):
+    """
+        New Story Creation page
+    """
+    def __init__(self, master, controller):
+        super().__init__(master)
+        self.controller = controller
+        
+        # Label for the master page
+        label = tk.Label(self, text="New Story Creation", font=("Helvetica", 24))
+        label.pack(pady=10)
+
+        title_label = tk.Label(self, text="What is the title of the story?")
+        title_label.pack(pady=2)
+        self.title_box = tk.Entry(self, width=50) 
+        self.title_box.pack(pady=10)
+
+        genre_label = tk.Label(self, text="What is the genre of the story?")
+        genre_label.pack(pady=2)
+        self.genre_box = tk.Entry(self, width=50)
+        self.genre_box.pack(pady=10)
+
+        num_char_label = tk.Label(self, text="How many Non-Player Characters would you like to add to the story (max 10)?")
+        num_char_label.pack(pady=2)
+        self.num_char_box = tk.Entry(self, width=50)
+        self.num_char_box.pack(pady=10)
+
+        story_label = tk.Label(self, text="Can you give us an overview of the story setup?")
+        story_label.pack(pady=2)
+        self.story_box = tk.Text(self, width=50, height=5)
+        self.story_box.pack(pady=10)
+
+        goal_label = tk.Label(self, text="What is the goal of the player character?")
+        goal_label.pack(pady=2)
+        self.goal_box = tk.Entry(self, width=50)
+        self.goal_box.pack(pady=10)
+
+        back_button = tk.Button(self, text="Back", font=("Arial", 16),
+                                 command=lambda: controller.show_frame("MainInterface"), width=20)
+        back_button.pack(pady=10)                     
+        next_button = tk.Button(self, text="Next", font=("Arial", 16), 
+                                command=self.event_btnOnClick, width=20)
+        next_button.pack(pady=10)
+
+        if B_DEBUG_MODE:
+            self.debug_autoPopulateFields()
+    
+    def event_btnOnClick(self):
+        self.controller.json_data["story"] = {
+            "title": self.title_box.get().replace(" ", "_"),
+            "genre": self.genre_box.get(),
+            "storyline": self.story_box.get("1.0",'end-1c'),
+            "goal": self.goal_box.get()
+        } 
+                
+        numNPCs = int(self.num_char_box.get())
+        if numNPCs > 0:
+            self.controller.num_npcs = numNPCs
+
+            #Initialize Create NPC Frame
+            self.controller.initializePageNpc(numNPCs)            
+            self.controller.show_frame("PageCreateNPC")
+        else:
+            self.generateStartingPrompts()
+            self.controller.initializePageGameInterface()
+
+    def debug_autoPopulateFields(self):
+        #Auto-populate fields for debugging purposes
+        story_description = """In a fractured galaxy where humanity teeters on extinction after unearthing a volatile alien relic, you play a rogue mercenary 
+        thrust into a war between rival factions and ancient AI. Your choices determine whether to salvage civilization, harness the relic’s reality-bending 
+        power, or watch the cosmos collapse."""        
+        story_goal = """The player must decide whether to secure the alien relic to unite the warring factions, exploit its power for personal dominance, 
+        or let chaos consume the galaxy, shaping the fate of civilization and the cosmos"""
+        story_description = story_description.replace('\r', '').replace('\n', '')
+        story_goal = story_goal.replace('\r', '').replace('\n', '')
+
+        self.title_box.insert(0, "Test")
+        self.genre_box.insert(0, "Science Fiction")
+        self.num_char_box.insert(0, 1)
+        self.story_box.insert("1.0", story_description)
+        self.goal_box.insert(0, story_goal)
+        #End debug fields        
+
+class PageLoadStory(tk.Frame):
+    def __init__(self, master, controller):
+        super().__init__(master)
+        self.controller = controller
+        
+        label = tk.Label(self, text="Load Story", font=("Helvetica", 24))
+        label.pack(pady=10)
+
+        title_label = tk.Label(self, text="What is the title of the story that you want to load?")
+        title_label.pack(pady=2)
+        self.title_box = tk.Entry(self, width=50)
+        self.title_box.pack(pady=10)        
+                
+        back_button = tk.Button(self, text="Back", font=("Arial", 16),
+                                 command=lambda: controller.show_frame("MainInterface"), 
+                                 width=20)
+        back_button.pack(pady=10)
+
+        next_button = tk.Button(self, text="Next", font=("Arial", 16), command=self.event_btnOnClick, 
+                                width=20)
+        next_button.pack(pady=10) 
+
+    def event_btnOnClick(self):
+        title = self.title_box.get()
+        try:
+            filename = title.replace(" ", "_") + ".json"
+            with open(filename, 'r') as file:
+                self.controller.json_data = json.load(file)
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Unable to open file: {str(e)}")
+
+        beginning_line = get_last_story_segment(self.controller.json_data)
+        run_generation(beginning_line)
+
+# class PageCreateNPC(tk.Frame):
+#     def __init__(self, master, controller):
+#         super().__init__(master)
+#         self.controller = controller
+        
+#         # Generic Code - Replace with implementation in NPC.py
+#         label = tk.Label(self, text="Create NPC", font=("Helvetica", 16))
+#         label.pack(pady=10)
+        
+#         # Back button to return to the Master Page
+#         back_button = tk.Button(self, text="Back",
+#                                  command=lambda: controller.show_frame("MainInterface"))
+#         back_button.pack(pady=5)
+
+class PageGameInterface(tk.Frame):
+    def __init__(self, master, controller, beginning_line):
+        super().__init__(master)
+        self.controller = controller
+                        
+        # Create a Text widget (editable multi-line text)
+        self.text = tk.Text(
+            self,
+            height=20,  # Number of lines
+            width=50,  # Width in characters
+            font=("Arial", 12),
+            wrap=tk.WORD,  # Wrap text at word boundaries
+        )
+
+        self.text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.text.insert("1.0", f"{beginning_line}\n")
+        self.text.config(state="disabled")
+
+        # Scrollbar
+        self.scrollbar = tk.Scrollbar(self.text, command=self.text.yview)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.text.config(yscrollcommand=self.scrollbar.set)
+
+        # Label
+        label = tk.Label(self, text="Enter your text below:")
+        label.pack(pady=10)
+
+        # Textbox (Entry widget)
+        self.textbox = tk.Entry(self, width=100)
+        self.textbox.pack(pady=10)
+
+        #save button
+        button = tk.Button(self, text="Save", command=self.save, width=10)
+        button.place(relx=1.0, rely=1.0, anchor="se")    
+
+        # Submit button
+        submit_button = tk.Button(self, text="Submit", command=self.on_submit)
+        submit_button.pack(pady=10)            
+
+    # Function to handle button click
+    def on_submit(self):
+        user_text = self.textbox.get()
+        input_type = self.controller.classifier(client, user_text).choices[0].message.content
+        print(input_type)
+        response = None
+
+        if input_type == "story":
+            response = story_generation(client, MODEL_NAME, self.controller.json_data, user_text)
+            self.controller.json_data["history"].append(["User", user_text])
+            self.controller.json_data["history"].append([input_type, response])
+
+        elif input_type in self.controller.json_data["chars"].keys():
+            dv = get_dev_message(get_initial_prompt(self.controller.json_data, input_type), self.controller.json_data["history"])
+            response = get_response(client, dv, user_text).choices[0].message.content
+            self.controller.json_data["history"].append(["User", user_text])
+            self.controller.json_data["history"].append([input_type, response])
+
+        else:
+            messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
+
+        if response is not None:
+            self.text.config(state="normal")
+            self.text.insert("end", f"You: {user_text}\n")
+            self.text.insert("end", f"{response}\n")
+            self.text.config(state="disabled")
+            self.text.see(tk.END)
+            self.textbox.delete(0, tk.END)
+
+        else:
+            messagebox.showwarning("Empty Input", "Please enter some text!")
+
+    def save(self):
+        filename = self.controller.json_data["story"]["title"] + ".json"
+        file = open(filename, 'w')
+        json.dump(self.controller.json_data, file)
+        file.close()
 
 if __name__ == "__main__":
-    main()
+    app = AppEngine()
+    app.mainloop()

@@ -6,9 +6,6 @@ import re
 import tkinter as tk
 from tkinter import messagebox
 
-
-
-
 def save_to_history(story_text, user_input, uer_input_analysis = ""):
     """Save FULL generated story to history file"""
     entry = {
