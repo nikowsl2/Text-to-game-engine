@@ -17,15 +17,17 @@ DATA = {
     "history": []
 }
 client = OpenAI(
-        api_key="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",
-        base_url="https://api.groq.com/openai/v1"
-    )
+    api_key="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",
+    base_url="https://api.groq.com/openai/v1"
+)
+
 
 def get_client():
     return OpenAI(
         api_key="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",
         base_url="https://api.groq.com/openai/v1"
     )
+
 
 def classifier(client, user_input):
     return client.chat.completions.create(
@@ -127,16 +129,21 @@ def run_generation(beginning_line):
             DATA["history"].append(["User", user_text])
             DATA["history"].append([input_type, response])
         elif input_type in DATA["chars"].keys():
-            dv = get_dev_message(get_initial_prompt(DATA, input_type), DATA["history"])
-            response = get_response(client, dv, user_text).choices[0].message.content
+            dv = get_dev_message(get_initial_prompt(
+                DATA, input_type), DATA["history"])
+            response = get_response(
+                client, dv, user_text).choices[0].message.content
             DATA["history"].append(["User", user_text])
             DATA["history"].append([input_type, response])
         else:
-            messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
+            messagebox.showerror(
+                "An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
         if response is not None:
             text.config(state="normal")
-            text.insert("end", f"You: {user_text}\n")
+            text.insert("end", f"\n")
+            text.insert("end", f"You: {user_text}\n\n", "user_text")
             text.insert("end", f"{response}\n")
+            text.tag_configure("user_text", foreground="grey")
             text.config(state="disabled")
             text.see(tk.END)
             textbox.delete(0, tk.END)
@@ -153,15 +160,15 @@ def run_generation(beginning_line):
         json.dump(DATA, file)
         file.close()
 
-    #save button
+    # save button
     button = tk.Button(root, text="Save", command=save, width=10)
     button.place(relx=1.0, rely=1.0, anchor="se")
 
     # Run the application
     root.mainloop()
 
-def run_mode1():
 
+def run_mode1():
 
     root = tk.Tk()
     root.title("Story Creation")
@@ -177,21 +184,23 @@ def run_mode1():
     genre_box = tk.Entry(root, width=50)
     genre_box.pack(pady=10)
 
-    num_char_label = tk.Label(root, text="How many Non-Player Characters would you like to add to the story (max 10)?")
+    num_char_label = tk.Label(
+        root, text="How many Non-Player Characters would you like to add to the story (max 10)?")
     num_char_label.pack(pady=2)
     num_char_box = tk.Entry(root, width=50)
     num_char_box.pack(pady=10)
 
-    story_label = tk.Label(root, text="Can you give us an overview of the story setup?")
+    story_label = tk.Label(
+        root, text="Can you give us an overview of the story setup?")
     story_label.pack(pady=2)
     story_box = tk.Text(root, width=50, height=5)
     story_box.pack(pady=10)
 
-    goal_label = tk.Label(root, text="What is the goal of the player character?")
+    goal_label = tk.Label(
+        root, text="What is the goal of the player character?")
     goal_label.pack(pady=2)
     goal_box = tk.Entry(root, width=50)
     goal_box.pack(pady=10)
-
 
     def on_submit():
         title = title_box.get()
@@ -202,7 +211,8 @@ def run_mode1():
         try:
             num_char = int(num_char)
         except ValueError:
-            messagebox.showerror("Invalid Number", "Please enter a valid number!")
+            messagebox.showerror(
+                "Invalid Number", "Please enter a valid number!")
 
         DATA["story"] = {
             "title": title.replace(" ", "_"),
@@ -216,25 +226,28 @@ def run_mode1():
                 npc = create_char(i)
                 DATA["chars"][npc["name"]] = npc
             except Exception as e:
-                messagebox.showerror("Error", f"Character creation failed: {str(e)}")
+                messagebox.showerror(
+                    "Error", f"Character creation failed: {str(e)}")
 
         prompt = get_starting_prompt(DATA)
-        beginning_line = get_response(client, MODEL_NAME, prompt).choices[0].message.content
+        beginning_line = get_response(
+            client, MODEL_NAME, prompt).choices[0].message.content
         DATA["target"] = "story"
         DATA["history"].append(["story", beginning_line])
         run_generation(beginning_line)
 
-
-
-    next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
+    next_button = tk.Button(root, text="Next", font=(
+        "Arial", 16), command=on_submit, width=20)
     next_button.pack(pady=10)
+
 
 def run_mode2():
     root = tk.Tk()
     root.title("Story Creation")
     root.geometry("960x540")
 
-    title_label = tk.Label(root, text="What is the title of the story that you want to load?")
+    title_label = tk.Label(
+        root, text="What is the title of the story that you want to load?")
     title_label.pack(pady=2)
     title_box = tk.Entry(root, width=50)
     title_box.pack(pady=10)
@@ -244,27 +257,32 @@ def run_mode2():
         try:
             filename = title.replace(" ", "_") + ".json"
             with open(filename, 'r') as file:
+                global DATA
                 DATA = json.load(file)
             root.destroy()
         except Exception as e:
             messagebox.showerror("Error", f"Unable to open file: {str(e)}")
+            return
 
         beginning_line = get_last_story_segment(DATA)
         run_generation(beginning_line)
 
-    next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
+    next_button = tk.Button(root, text="Next", font=(
+        "Arial", 16), command=on_submit, width=20)
     next_button.pack(pady=10)
 
+
 def main():
-    #print("✨ Story Generator ✨")
-    #print("1. Start New Story")
-    #print("2. Exiting")
+    # print("✨ Story Generator ✨")
+    # print("1. Start New Story")
+    # print("2. Exiting")
 
     root = tk.Tk()
     root.title("Main Menu")
     root.geometry("960x540")
 
-    title_label = tk.Label(root, text="CSCI 544 Text To Game Engine", font=("Arial", 24))
+    title_label = tk.Label(
+        root, text="CSCI 566 Text To Game Engine", font=("Arial", 24))
     title_label.pack(pady=80)
 
     def run_1():
@@ -275,10 +293,12 @@ def main():
         run_mode2()
         root.destroy()
 
-    new_button = tk.Button(root, text="New Game", font=("Arial", 16), command=run_1, width=30, height=3)
+    new_button = tk.Button(root, text="New Game", font=(
+        "Arial", 16), command=run_1, width=30, height=3)
     new_button.pack(pady=10)
 
-    new_button = tk.Button(root, text="Load Game", font=("Arial", 16), command=run_2, width=30, height=3)
+    new_button = tk.Button(root, text="Load Game", font=(
+        "Arial", 16), command=run_2, width=30, height=3)
     new_button.pack(pady=10)
 
     root.mainloop()
