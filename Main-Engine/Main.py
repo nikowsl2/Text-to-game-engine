@@ -4,6 +4,7 @@ import os
 import time
 import re
 import tkinter as tk
+import chromadb
 
 import NPC
 import MemoryAgent
@@ -11,16 +12,26 @@ import MemoryAgent
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
 from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation
+from sentence_transformers import SentenceTransformer
 
+#Debugging Variables
 B_DEBUG_MODE = True
+B_PERSIST_ENTRIES = False
 
 HISTORY_FILE = "history.json"
 PROTAGONISTS_FILE = "protagonists.json"
 MODEL_NAME = "llama3-8b-8192"
+
+#Variables for Vector DB
+DB_PATH = "./chroma_db"
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
 DATA = {
     "chars": {},
     "history": []
 }
+
+
 client = OpenAI(
         api_key="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",
         base_url="https://api.groq.com/openai/v1"
@@ -310,15 +321,16 @@ class AppEngine(tk.Tk):
         self.dlgResWidth = dlgResWidth
         self.dlgResHeight = dlgResHeight
         self.geometry(f"{self.dlgResWidth}x{self.dlgResHeight}")
-        self.debug_mode = B_DEBUG_MODE
+        self.debug_mode = B_DEBUG_MODE                
 
-        #Note: All created frames have access to set/get values from json_data.
-        #Originally the DATA global var.
-        self.json_data = {
+        #Note: All created frames have access to set/get values from DATA.
+        self.DATA = {
             "chars": {},
             "history": []
         }
-        self.beginning_line = None
+        self.beginning_line = None #The initial prompt displayed.
+        self.story_memory = None
+        self.npc_memory = None
         
         # Create a container frame to hold all the pages
         self.container = tk.Frame(self)
@@ -347,11 +359,11 @@ class AppEngine(tk.Tk):
         frame.tkraise()
 
     def generateStartingPrompts(self):
-        prompt = get_starting_prompt(self.json_data)
+        prompt = get_starting_prompt(self.DATA)
         beginning_line = get_response(client, MODEL_NAME, prompt).choices[0].message.content
 
-        self.json_data["target"] = "story"
-        self.json_data["history"].append(["story", beginning_line])
+        self.DATA["target"] = "story"
+        self.DATA["history"].append(["story", beginning_line])
         self.beginning_line = beginning_line
 
     def initializePageNpc(self, num_npcs):
@@ -365,8 +377,44 @@ class AppEngine(tk.Tk):
         frame = PageGameInterface(master=self.container, controller=self, beginning_line=beginning_line)
         self.frames[page_name] = frame
         frame.grid(row=0, column=0, sticky="nsew")
+    
+    def initializeStoryMemory(self, beginning_line):    
+        story_title = self.DATA["story"]["title"]                   
+        story_passages_name = f"story_passages_{story_title}"
+        story_entities_name = f"story_entities_{story_title}"
+        self.story_memory = MemoryAgent.StoryAgent(entities_collection_name=story_entities_name, 
+                                                   passages_collection_name=story_passages_name, 
+                                                   embedding_model=EMBEDDING_MODEL)
+
+        #Add initial story passage. 
+        #TODO: Consider storing in separate function
+        json_story_summary = self.story_memory.dev_extract_story_segment(beginning_line)
+        story_passage_metadata = {
+            "setting_id": json_story_summary["setting_atmosphere"][0]["id"],
+            "setting_description": json_story_summary["setting_atmosphere"][0]["description"],
+            "setting_mood": json_story_summary["setting_atmosphere"][0]["mood"], 
+            "key_events": ", ".join([event["id"] for event in json_story_summary["key_events"]])
+        }
+
+        passageId = self.story_memory.add_story_passage(beginning_line, story_passage_metadata)
+        self.story_memory.add_story_metadata(json_story_summary, passageId)
+
+    def initializeNPCMemory(self):
+        story_title = self.DATA["story"]["title"]   
+        npc_collection_name = f"npc_collection_{story_title}"
+        npc_interactions_name = f"npc_interactions_{story_title}"
+
+        self.npc_memory = MemoryAgent.NPCAgent(npc_collection_name=npc_collection_name,
+                                               npc_interactions_name=npc_interactions_name,
+                                               embedding_model=EMBEDDING_MODEL)
+        
+        #Add initial npcs. 
+        #TODO: Consider storing in separate function
+        self.npc_memory.add_npcs(self.DATA["chars"])
 
     def displayPageGameInterface(self):
+        self.initializeStoryMemory(self.beginning_line)
+        self.initializeNPCMemory()
         self.initializePageGameInterface(self.beginning_line)
         self.show_frame("PageGameInterface")
 
@@ -379,7 +427,7 @@ class AppEngine(tk.Tk):
                         Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
                 If the user input is directed at the story generator, respond with \"story\".
                 If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
-                part of the following: {list(self.json_data["chars"].keys())}
+                part of the following: {list(self.DATA["chars"].keys())}
                 
                 Here are a few examples:
                 Current conversation agent: story
@@ -408,17 +456,17 @@ class AppEngine(tk.Tk):
                                 
                 Here is the current context that you are provided with:
                 Characters:
-                {format_characters(self.json_data)}
+                {format_characters(self.DATA)}
                 
                 Conversation History:
-                {get_last_story_segment(self.json_data)}
+                {get_last_story_segment(self.DATA)}
                 
                 Remember to respond ONLY with "story" or a character's name. Do not include any other information in the response.
-                Also remember that if you respond with a character's name, it MUST be included in the following list {list(self.json_data["chars"].keys())}.
+                Also remember that if you respond with a character's name, it MUST be included in the following list {list(self.DATA["chars"].keys())}.
                 DO NOT respond with a name not on the provided list. Your only valid responses are names from that list or "story".
                 
                 
-                The current conversation agent: {self.json_data["target"]}
+                The current conversation agent: {self.DATA["target"]}
                 User Input: {user_input}
                 """},
             ],
@@ -493,7 +541,7 @@ class PageNewStory(tk.Frame):
             self.debug_autoPopulateFields()
     
     def event_btnOnClick(self):
-        self.controller.json_data["story"] = {
+        self.controller.DATA["story"] = {
             "title": self.title_box.get().replace(" ", "_"),
             "genre": self.genre_box.get(),
             "storyline": self.story_box.get("1.0",'end-1c'),
@@ -555,12 +603,12 @@ class PageLoadStory(tk.Frame):
         try:
             filename = title.replace(" ", "_") + ".json"
             with open(filename, 'r') as file:
-                self.controller.json_data = json.load(file)
+                self.controller.DATA = json.load(file)
 
         except Exception as e:
             messagebox.showerror("Error", f"Unable to open file: {str(e)}")
 
-        beginning_line = get_last_story_segment(self.controller.json_data)
+        beginning_line = get_last_story_segment(self.controller.DATA)
         run_generation(beginning_line)
 
 # class PageCreateNPC(tk.Frame):
@@ -624,15 +672,15 @@ class PageGameInterface(tk.Frame):
         response = None
 
         if input_type == "story":
-            response = story_generation(client, MODEL_NAME, self.controller.json_data, user_text)
-            self.controller.json_data["history"].append(["User", user_text])
-            self.controller.json_data["history"].append([input_type, response])
+            response = story_generation(client, MODEL_NAME, self.controller.DATA, user_text)
+            self.controller.DATA["history"].append(["User", user_text])
+            self.controller.DATA["history"].append([input_type, response])
 
-        elif input_type in self.controller.json_data["chars"].keys():
-            dv = get_dev_message(get_initial_prompt(self.controller.json_data, input_type), self.controller.json_data["history"])
+        elif input_type in self.controller.DATA["chars"].keys():
+            dv = get_dev_message(get_initial_prompt(self.controller.DATA, input_type), self.controller.DATA["history"])
             response = get_response(client, dv, user_text).choices[0].message.content
-            self.controller.json_data["history"].append(["User", user_text])
-            self.controller.json_data["history"].append([input_type, response])
+            self.controller.DATA["history"].append(["User", user_text])
+            self.controller.DATA["history"].append([input_type, response])
 
         else:
             messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
@@ -649,11 +697,19 @@ class PageGameInterface(tk.Frame):
             messagebox.showwarning("Empty Input", "Please enter some text!")
 
     def save(self):
-        filename = self.controller.json_data["story"]["title"] + ".json"
+        filename = self.controller.DATA["story"]["title"] + ".json"
         file = open(filename, 'w')
-        json.dump(self.controller.json_data, file)
+        json.dump(self.controller.DATA, file)
         file.close()
 
 if __name__ == "__main__":
+   db_client = chromadb.PersistentClient(path=DB_PATH) 
+
+   #Clear out database if persistent entries are not desired.
+   if not B_PERSIST_ENTRIES:
+    collections = db_client.list_collections()
+    for collection in collections:
+        db_client.delete_collection(collection)
+
     app = AppEngine()
     app.mainloop()

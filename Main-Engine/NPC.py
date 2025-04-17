@@ -86,7 +86,7 @@ class PageCreateNPC(tk.Frame):
         self.char_prompt["q_help"] = self.help_box.get("1.0", "end-1c")
         self.char_prompt["notes"] = self.note_box.get("1.0", "end-1c")
         
-        self.controller.json_data["chars"][self.char_prompt["name"]] = self.char_prompt
+        self.controller.DATA["chars"][self.char_prompt["name"]] = self.char_prompt
 
         if self.num_npcs_created < self.num_npcs:
             self.num_npcs_created += 1
@@ -97,7 +97,7 @@ class PageCreateNPC(tk.Frame):
             # self.npc_created_label.config(text=f"NPC Creation: {self.num_npcs_created} of {self.num_npcs}")
         else:
             #TODO: Initialize game frame
-            self.controller.generateStartingPrompts()
+            self.controller.generateStartingPrompts()      
             self.controller.displayPageGameInterface()
 
     def reset_form(self):
@@ -127,7 +127,7 @@ class PageCreateNPC(tk.Frame):
             },
             "examples": {
                 "input_sample": {
-                    "genre": "In a fractured galaxy where humanity teeters on extinction after unearthing a volatile alien relic, you play a rogue mercenary thrust into a war between rival factions and ancient AI. Your choices determine whether to salvage civilization, harness the relic’s reality-bending power, or watch the cosmos collapse.",
+                    "genre": "Science Fiction",
                     "storyline": "In a fractured galaxy where humanity teeters on extinction after unearthing a volatile alien relic, you play a rogue mercenary thrust into a war between rival factions and ancient AI. Your choices determine whether to salvage civilization, harness the relic’s reality-bending power, or watch the cosmos collapse.",
                     "goal": "The player must decide whether to secure the alien relic to unite the warring factions, exploit its power for personal dominance, or let chaos consume the galaxy, shaping the fate of civilization and the cosmos"
                 },
@@ -144,7 +144,7 @@ class PageCreateNPC(tk.Frame):
                     }
                 }
             },
-            "input_story": self.controller.json_data["story"]
+            "input_story": self.controller.DATA["story"]
         }
 
         json_prompt_string = json.dumps(prompt_template)
@@ -192,7 +192,7 @@ class PageCreateNPC(tk.Frame):
         self.help_box.insert("1.0", segments["responses"]["q_help"])
 
     def get_initial_prompt(self, char_name):
-        target_char = self.controller.json_data["chars"][char_name]
+        target_char = self.controller.DATA["chars"][char_name]
 
 
         
