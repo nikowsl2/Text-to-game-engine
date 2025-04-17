@@ -6,7 +6,7 @@ import re
 import tkinter as tk
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
-from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation
+from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation, check_goal
 
 
 HISTORY_FILE = "history.json"
@@ -149,6 +149,26 @@ def run_generation(beginning_line):
             textbox.delete(0, tk.END)
         else:
             messagebox.showwarning("Empty Input", "Please enter some text!")
+        
+        # Analyze the player's action in relation to the goal.
+        status, reason, ending_line = check_goal(client, MODEL_NAME, DATA)
+        if status == "progress":
+            print(f"✅ Progress: {reason}")
+            return
+
+        if status == "game_over":
+            ending_line = "Game Over: " + ending_line
+            print(f"❌ Game Over: {reason}")
+        elif status == "win":
+            ending_line = "You Win: " + ending_line
+            print(f"🎉 You Win! {reason}")
+
+        text.config(state="normal")
+        text.insert("end", f"\n{ending_line}\n")
+        text.config(state="disabled")
+        text.see(tk.END)
+        textbox.delete(0, tk.END)
+
 
     # Submit button
     submit_button = tk.Button(root, text="Submit", command=on_submit)
