@@ -11,7 +11,7 @@ import MemoryAgent
 
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
-from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation
+from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation, check_goal
 from sentence_transformers import SentenceTransformer
 
 #Debugging Variables
@@ -31,8 +31,7 @@ DATA = {
     "history": []
 }
 
-
-client = OpenAI(
+CLIENT = OpenAI(
         api_key="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",
         base_url="https://api.groq.com/openai/v1"
     )
@@ -42,141 +41,6 @@ def get_client():
         api_key="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",
         base_url="https://api.groq.com/openai/v1"
     )
-
-def classifier(client, user_input):
-    return client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": f"""You are a classifier. Your job is to determine the user's intent with his input."""},
-            {"role": "user", "content": f"""
-                    Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
-            If the user input is directed at the story generator, respond with \"story\".
-            If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
-            part of the following: {list(DATA["chars"].keys())}
-            
-            Here are a few examples:
-            Current conversation agent: story
-            User input: I walk down the hallway
-            Your response: story
-            You respond with story because the user is currently using the story agent and by issuing directions to progress the story they \
-            clearly wish to continue using the story agent
-            
-            Current conversation agent: John
-            User input: How was your day?
-            Your response: John
-            You respond with John as the user is currently conversing with John and the input is clearly directed at a character, meaning they desire to continue conversing with John
-            
-            
-            Context: the bartender's name is Chuck
-            Current conversation agent: story
-            User input: I approach the bartender
-            Your response: Chuck
-            You respond with Chuck as the user is currently using the story agent but clearly wishes to begin a conversation with the Bartender.\
-             You respond with Chuck because the bartender's name is Chuck, but if the bartender's name was John, you would respond with John.
-             
-            Current conversation agent: Chuck
-            User input: I get up from the bar and leave the room
-            Your response: story
-            You respond with story as while the user was previously conversing with Chuck, the direction clearly \
-            indicates that the user wishes leave the conversation and progress with the story agent.
-            
-            
-            Here is the current context that you are provided with:
-            Characters:
-            {format_characters(DATA)}
-            
-            Conversation History:
-            {get_last_story_segment(DATA)}
-            
-            Remember to respond ONLY with "story" or a character's name. Do not include any other information in the response.
-            Also remember that if you respond with a character's name, it MUST be included in the following list {list(DATA["chars"].keys())}.
-            DO NOT respond with a name not on the provided list. Your only valid responses are names from that list or "story".
-            
-            
-            The current conversation agent: {DATA["target"]}
-            User Input: {user_input}
-            """},
-        ],
-        stream=False
-    )
-
-#Main Page
-def run_generation(beginning_line):
-    # Create the main window
-    root = tk.Tk()
-    root.title("story generation")
-    root.geometry("1280x720")
-
-    # Create a Text widget (editable multi-line text)
-    text = tk.Text(
-        root,
-        height=20,  # Number of lines
-        width=50,  # Width in characters
-        font=("Arial", 12),
-        wrap=tk.WORD,  # Wrap text at word boundaries
-    )
-
-    text.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-    text.insert("1.0", f"{beginning_line}\n")
-    text.config(state="disabled")
-
-    # Scrollbar
-    scrollbar = tk.Scrollbar(text, command=text.yview)
-    scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    text.config(yscrollcommand=scrollbar.set)
-
-    # Label
-    label = tk.Label(root, text="Enter your text below:")
-    label.pack(pady=10)
-
-    # Textbox (Entry widget)
-    textbox = tk.Entry(root, width=100)
-    textbox.pack(pady=10)
-
-    # Function to handle button click
-    def on_submit():
-        user_text = textbox.get()
-        input_type = classifier(client, user_text).choices[0].message.content
-        print(input_type)
-        response = None
-        if input_type == "story":
-            response = story_generation(client, MODEL_NAME, DATA, user_text)
-            DATA["history"].append(["User", user_text])
-            DATA["history"].append([input_type, response])
-        elif input_type in DATA["chars"].keys():
-            dv = get_dev_message(get_initial_prompt(DATA, input_type), DATA["history"])
-            response = get_response(client, dv, user_text).choices[0].message.content
-            DATA["history"].append(["User", user_text])
-            DATA["history"].append([input_type, response])
-
-        else:
-            messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
-        if response is not None:
-            text.config(state="normal")
-            text.insert("end", f"You: {user_text}\n")
-            text.insert("end", f"{response}\n")
-            text.config(state="disabled")
-            text.see(tk.END)
-            textbox.delete(0, tk.END)
-        else:
-            messagebox.showwarning("Empty Input", "Please enter some text!")
-
-    # Submit button
-    submit_button = tk.Button(root, text="Submit", command=on_submit)
-    submit_button.pack(pady=10)
-
-    def save():
-        filename = DATA["story"]["title"] + ".json"
-        file = open(filename, 'w')
-        json.dump(DATA, file)
-        file.close()
-
-    #save button
-    button = tk.Button(root, text="Save", command=save, width=10)
-    button.place(relx=1.0, rely=1.0, anchor="se")
-
-    # Run the application
-    root.mainloop()
 
 #New Story Creation
 def run_mode1():
@@ -209,7 +73,6 @@ def run_mode1():
     goal_box = tk.Entry(root, width=50)
     goal_box.pack(pady=10)
 
-
     def on_submit():
         title = title_box.get()
         genre = genre_box.get()
@@ -236,7 +99,7 @@ def run_mode1():
                 messagebox.showerror("Error", f"Character creation failed: {str(e)}")
 
         prompt = get_starting_prompt(DATA)
-        beginning_line = get_response(client, MODEL_NAME, prompt).choices[0].message.content
+        beginning_line = get_response(CLIENT, MODEL_NAME, prompt).choices[0].message.content
         DATA["target"] = "story"
         DATA["history"].append(["story", beginning_line])
         run_generation(beginning_line)
@@ -270,46 +133,6 @@ def run_mode2():
 
     next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
     next_button.pack(pady=10)
-
-# def main():
-#     #print("✨ Story Generator ✨")
-#     #print("1. Start New Story")
-#     #print("2. Exiting")
-
-#     root = tk.Tk()
-#     root.title("Main Menu")
-#     root.geometry("960x540")
-
-#     title_label = tk.Label(root, text="CSCI 544 Text To Game Engine", font=("Arial", 24))
-#     title_label.pack(pady=80)
-
-#     def run_1():
-#         run_mode1()
-#         root.destroy()
-
-#     def run_2():
-#         run_mode2()
-#         root.destroy()
-
-#     new_button = tk.Button(root, text="New Game", font=("Arial", 16), command=run_1, width=30, height=3)
-#     new_button.pack(pady=10)
-
-#     new_button = tk.Button(root, text="Load Game", font=("Arial", 16), command=run_2, width=30, height=3)
-#     new_button.pack(pady=10)
-
-#     root.mainloop()
-
-#     """mode = input("\nSelect (1/2): ").strip()
-
-#     if mode == "1":
-#         if os.path.exists(HISTORY_FILE):
-#             os.remove(HISTORY_FILE)
-#         run_mode1()
-#     elif mode == "2":
-#         if not os.path.exists(HISTORY_FILE) or not os.path.exists(PROTAGONISTS_FILE):
-#             print("Required files missing! Start with Mode 1 first.")
-#             return
-#         run_mode2() """
 
 class AppEngine(tk.Tk):
     """
@@ -363,9 +186,7 @@ class AppEngine(tk.Tk):
 
     def generateStartingPrompts(self):
         prompt = get_starting_prompt(self.DATA)
-        beginning_line = get_response(client, MODEL_NAME, prompt).choices[0].message.content
-
-        
+        beginning_line = get_response(CLIENT, MODEL_NAME, prompt).choices[0].message.content
 
         self.DATA["target"] = "story"
         self.DATA["history"].append(["story", beginning_line])
@@ -391,9 +212,11 @@ class AppEngine(tk.Tk):
                                                    passages_collection_name=story_passages_name, 
                                                    embedding_model=EMBEDDING_MODEL)
 
+        self.AddNewStoryPassage(beginning_line)
         #Add initial story passage. 
-        #TODO: Consider storing in separate function
-        self.json_story_summary = self.story_memory.dev_extract_story_segment(beginning_line)
+
+    def AddNewStoryPassage(self, response, user_text=""):
+        self.json_story_summary = self.story_memory.extract_story_segment(response)
 
         if B_DEBUG_MODE:
             self.saveToJson()
@@ -402,11 +225,16 @@ class AppEngine(tk.Tk):
             "setting_id": self.json_story_summary ["setting_atmosphere"][0]["id"],
             "setting_description": self.json_story_summary ["setting_atmosphere"][0]["description"],
             "setting_mood": self.json_story_summary ["setting_atmosphere"][0]["mood"], 
-            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]])
-        }
+            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]]),            
+        } 
 
-        passageId = self.story_memory.add_story_passage(beginning_line, story_passage_metadata)
-        self.story_memory.add_story_metadata(self.json_story_summary , passageId)
+        #Add additional metadata depending on scenario.
+        if user_text != "":
+            story_passage_metadata["user_prompt"] = user_text
+
+        passageId = self.story_memory.add_story_passage(response, story_passage_metadata)
+        self.story_memory.add_story_metadata(self.json_story_summary, passageId)
+        self.timestamp_lastPassage = passageId        
 
     def initializeNPCMemory(self):
         story_title = self.DATA["story"]["title"]   
@@ -419,6 +247,9 @@ class AppEngine(tk.Tk):
         
         #Add initial npcs. 
         #TODO: Consider storing in separate function
+        self.npc_memory.add_npcs(self.DATA)
+
+    def AddNPCs(self):
         self.npc_memory.add_npcs(self.DATA)
 
     def displayPageGameInterface(self):
@@ -668,22 +499,26 @@ class PageGameInterface(tk.Frame):
     # Function to handle button click
     def on_submit(self):
         user_text = self.textbox.get()
-        input_type = self.controller.classifier(client, user_text).choices[0].message.content
+        input_type = self.controller.classifier(CLIENT, user_text).choices[0].message.content
         print(input_type)
         response = None
 
         if input_type == "story":
-            response = story_generation(client, MODEL_NAME, self.controller.DATA, user_text)
+            response = story_generation(CLIENT, MODEL_NAME, self.controller.DATA, user_text)
 
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
+
+            self.controller.AddNewStoryPassage(response, user_text)
 
         elif input_type in self.controller.DATA["chars"].keys():
             dv = get_dev_message(get_initial_prompt(self.controller.DATA, input_type), self.controller.DATA["history"])
-            response = get_response(client, dv, user_text).choices[0].message.content
+            response = get_response(CLIENT, dv, user_text).choices[0].message.content
 
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
+
+            self.controller.AddNewStoryPassage(response, user_text)
 
         else:
             messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
@@ -698,6 +533,25 @@ class PageGameInterface(tk.Frame):
 
         else:
             messagebox.showwarning("Empty Input", "Please enter some text!")
+
+        # Analyze the player's action in relation to the goal.
+        status, reason, ending_line = check_goal(CLIENT, MODEL_NAME, self.controller.DATA)
+        if status == "progress":
+            print(f"✅ Progress: {reason}")
+            return
+
+        if status == "game_over":
+            ending_line = "Game Over: " + ending_line
+            print(f"❌ Game Over: {reason}")
+        elif status == "win":
+            ending_line = "You Win: " + ending_line
+            print(f"🎉 You Win! {reason}")
+
+        self.text.config(state="normal")
+        self.text.insert("end", f"\n{ending_line}\n")
+        self.text.config(state="disabled")
+        self.text.see(tk.END)
+        self.textbox.delete(0, tk.END)
 
     def save(self):
         filename = self.controller.DATA["story"]["title"] + ".json"
@@ -714,5 +568,5 @@ if __name__ == "__main__":
     for collection in collections:
         db_client.delete_collection(collection)
 
-    app = AppEngine()
+    app = AppEngine(dlgResWidth=1280, dlgResHeight=900)
     app.mainloop()

@@ -252,6 +252,64 @@ def get_initial_gen(client, model_name, prompt):
         stream=False
     )
 
+def check_goal(client, model_name, data):
+    history = data["history"]
+    last_user_index = None
+    last_user_prompt = None
+    for i in range(len(history) - 1, -1, -1):
+        if history[i][0] == "User":
+            last_user_index = i
+            last_user_prompt = history[i][1]
+            break
+
+    latest_story_before_user = None
+    if last_user_index is not None:
+        for i in range(last_user_index - 1, -1, -1):
+            if history[i][0] == "story":
+                latest_story_before_user = history[i][1]
+                break
+
+    storyline = data["story"]["storyline"]
+    goal = data["story"]["goal"]
+    chars = data.get("chars", {})
+    character_summaries = "\n".join([
+        f"{c['name']}: {c['background']}" for c in chars.values()
+    ])
+
+    system_prompt = f"""Analyze the player's action in relation to the goal.
+    Storyline: {storyline}
+    Current Story Segment: {latest_story_before_user}
+    Player's Action: {last_user_prompt}
+    Goal of the Story: {goal}
+    Characters:
+    {character_summaries}
+
+    Determine:
+    - If the action progresses towards the goal
+    - If the action leads to failure (game over)
+    - If the action achieves the goal (win)
+
+    Respond in JSON format:
+    {{
+        "status": "progress" | "game_over" | "win",
+        "reason": "Brief explanation"
+        "ending_line": A dramatic narrative sentence for win or game_over status, otherwise leave empty.
+    }}"""
+
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=[{"role": "user", "content": system_prompt}],
+        temperature=0.3,
+        response_format={"type": "json_object"}
+    )
+
+    result = json.loads(response.choices[0].message.content)
+    status = result.get("status", "progress")
+    reason = result.get("reason", "")
+    ending_line = result.get("ending_line", "")
+    return status, reason, ending_line
+
+
 def run_mode2():
     client = get_client()
 

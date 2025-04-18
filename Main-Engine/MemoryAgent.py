@@ -260,9 +260,17 @@ class StoryAgent(MemoryAgent):
             metadatas=[metadata]
         )
 
+        if B_DEBUG_MODE:
+            base_str_output = "New Story Passage added with the following metadata:\n"
+
+            for key, value in metadata.items():
+                base_str_output += f"{key} : {value}\n"
+            
+            print(base_str_output)
+
         return storyPassageId
         
-    def dev_extract_story_segment(self, story_passage):
+    def extract_story_segment(self, story_passage):
         model = "llama3-70b-8192"
         client = openai.OpenAI(
             api_key="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",
@@ -445,6 +453,9 @@ class StoryAgent(MemoryAgent):
                 } #Add additional metadata if need be.                
             )
 
+            if B_DEBUG_MODE:
+                print(f"Added entity: {entry['id']} : {entry['description']} based on storyPassageId: {storyPassageId}")
+
         setting_embed_str = (
             f"Story Passage ID: {storyPassageId}\n"
             f"Setting ID: {setting_atmosphere[0]['id']}\n"
@@ -463,6 +474,10 @@ class StoryAgent(MemoryAgent):
                 "mood": setting_atmosphere[0]["mood"]
             } #Add additional metadata if need be.            
         )
+
+        if B_DEBUG_MODE:
+                print(f"Added setting: {setting_atmosphere[0]['id']} : {setting_atmosphere[0]['description']} based on storyPassageId: {storyPassageId}")
+
 
     def get_recent_passages(self, timeStamp, k: int = 1):
         """Gets the k most recent passages, using the time stamp as the search function."""
@@ -550,7 +565,7 @@ class NPCAgent(MemoryAgent):
                 ids=[entry['id']],
                 documents=entry['dialog'],
                 metadatas=[{
-                    "storyPassageId" : storyPassageId 
+                    "storyPassageId" : storyPassageId
                     #Add additional tags as needed.
                 }]
             )
@@ -608,7 +623,7 @@ if __name__ == "__main__":
         embedding_model=transfomer_model
     )
 
-    segment_components = story_collection.dev_extract_story_segment(story_text)
+    segment_components = story_collection.extract_story_segment(story_text)
 
     storyPassageId = debug_addStoryPassageAndMetaData(story_collection, segment_components)
     debug_addNPCsAndInteractions(npc_collection, npc_entries, segment_components, storyPassageId)
@@ -617,7 +632,7 @@ if __name__ == "__main__":
     dt_test_output = story_collection.get_recent_passages(timeStamp)
 
     dt_key_events = story_collection.get_keyEvents(dt_test_output["ids"][0][0])
-    dt_npcs = npc_collection.get_NPCs(query_text="Lyra Kaine")
+    dt_npcs = npc_collection.get_NPCs(ids="Lyra Kaine")
 
 
 #    query_text = "A high-risk job involving a rogue android"
