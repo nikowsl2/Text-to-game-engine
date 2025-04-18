@@ -173,6 +173,134 @@ def story_generation(client, model_name, data, user_text):
      
     Your response:
     1. Must respond directly to the action provided by the user
+    
+    2. NOT generate any dialogue for the main character.
+    """
+
+    user_prompt = f"""Given the following story that is currently in progress, a cast of characters, and the most \
+    recent action by the main character, write a continuation to the story that happens as a response to the most recent \
+    action by the main character.
+    
+    Your response should:
+    1. Response length has no limit(can be as short as one sentences or as long as several paragraphs)
+    2. Maintain genre conventions
+    3. Use character backstory appropriately
+    4. NOT need to include all characters. ONLY include characters that would make sense given the most recent action.
+    5. NOT include suggestions, notes, or commentary
+    6. NOT generate dialogue for the main Character. That will be left up to the user.
+    7. Strictly avoid phrases like "could be continued" or "next chapter"
+    8. Never include out-of-story text in parentheses/brackets
+    
+    Here is the story so far:
+    {get_last_story_segment(data)}
+    
+    With this set of Non Player Characters:
+    {char_summary}
+
+    Here is the most recent action by the main character that you are responding to:
+    {user_text}
+
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system",
+                 "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.95,
+            max_tokens=1200
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        print(f"\nError: {str(e)}")
+
+
+def story_generation2(client, model_name, data, user_text):
+
+    # Get story elements
+    # genre = input("Enter genre: ").strip()
+    # storyline = input("Enter story setup: ").strip()
+    # goal = input("Enter story goal (what the protagonist must achieve): ").strip()
+
+    # Load characters from JSON
+    # characters = load_characters()
+    char_summary = format_characters(data)
+
+    system_prompt = f"""You are a creative writing professional specializing in {data["story"]["genre"]} stories. \
+    The user will give you an in progress story and you will continue it in a manner that makes sense given the provided \
+    information and does not break continuity or violate any facts already established in the universe of the story.
+     
+    Your response:
+    1. Must respond directly to the action provided by the user
+    2. Must be between 1 to 4 sentences long. 
+    3. NOT generate any dialogue for the main character.
+    """
+
+    user_prompt = f"""Given the following story that is currently in progress, a cast of characters, and the most \
+    recent action by the main character, write a continuation to the story that happens as a response to the most recent \
+    action by the main character.
+    
+    Your response should:
+    1. Must be between 1 to 4 sentences long. 
+    2. Maintain genre conventions
+    3. Use character backstory appropriately
+    4. NOT need to include all characters. ONLY include characters that would make sense given the most recent action.
+    5. NOT include suggestions, notes, or commentary
+    6. NOT generate dialogue for the main Character. That will be left up to the user.
+    7. Strictly avoid phrases like "could be continued" or "next chapter"
+    8. Never include out-of-story text in parentheses/brackets
+    
+    Here is the story so far:
+    {get_last_story_segment(data)}
+    
+    With this set of Non Player Characters:
+    {char_summary}
+
+    Here is the most recent action by the main character that you are responding to:
+    {user_text}
+
+    """
+
+    try:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system",
+                 "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.95,
+            max_tokens=1200
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        print(f"\nError: {str(e)}")
+
+
+def story_generation3(client, model_name, data, user_text):
+
+    # Get story elements
+    # genre = input("Enter genre: ").strip()
+    # storyline = input("Enter story setup: ").strip()
+    # goal = input("Enter story goal (what the protagonist must achieve): ").strip()
+
+    # Load characters from JSON
+    # characters = load_characters()
+    char_summary = format_characters(data)
+
+    system_prompt = f"""You are a creative writing professional specializing in {data["story"]["genre"]} stories. \
+    The user will give you an in progress story and you will continue it in a manner that makes sense given the provided \
+    information and does not break continuity or violate any facts already established in the universe of the story.
+     
+    Your response:
+    1. Must respond directly to the action provided by the user
     2. Must be between 1 to 4 paragraphs long. 
     3. NOT generate any dialogue for the main character.
     """
