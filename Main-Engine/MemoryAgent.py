@@ -1,9 +1,7 @@
 import chromadb
 import datetime
-import re       #For converting the character names. Not really necessary.
 # import textwrap #For breaking up the story text into chunks.
 
-# import nltk 
 import json
 import openai
 
@@ -16,7 +14,7 @@ B_PERSIST_ENTRIES = False
 MODEL_TRANSFORMER = "all-MiniLM-L6-v2"
 
 #Test Input Text
-npc_entries = [
+npc_entries_old = [
   {
     "name": "Captain Elias Vorne",
     "role": "Aging spaceship commander",
@@ -37,8 +35,35 @@ npc_entries = [
   }
 ]
 
+npc_entries = {
+    "chars": {
+        "Lyra Kaine": {
+            "name": "Lyra Kaine",
+            "background": "Lyra Kaine is a former archaeologist turned mercenary, specializing in recovering and deciphering ancient alien artifacts. After losing her team in a failed excavation, she now works alone, navigating the treacherous waters of galactic politics and deadly factions.",
+            "act": "Analytical, resourceful, cautious, and fiercely independent, Lyra has a penchant for meticulous planning and quick decision-making under pressure.",
+            "info": "Lyra is an expert in ancient alien languages and technologies, particularly those related to the recently unearthed relic. She has unparalleled knowledge of its potential uses and risks, as well as connections to various factions and black market dealers.",
+            "init": "At the beginning of the story, Lyra Kaine is on a remote research station, carefully examining a new piece of the alien relic. She receives a distressing message revealing that her old patron has been compromised, forcing her to flee and seek allies in the chaos of the warring factions.",
+            "q_hello": "Lyra adjusts her glasses, eyes narrowing slightly. 'I haven't seen you before. Who are you, and what brings you here?'",
+            "q_important": "Her expression turns serious, her eyes focused on the horizon. 'Preserving knowledge and protecting humanity from the consequences of unchecked power.'",
+            "q_help": "She assesses you carefully, her eyes sharp. 'I can offer information or tools, but I won't risk my life unless it benefits us both.'",
+            "notes": ""
+        },
+        "Elysia Vance": {
+            "name": "Elysia Vance",
+            "background": "Elysia Vance is a former diplomat turned information broker, navigating the treacherous landscape of interstellar politics. With a knack for deciphering coded messages and negotiating between warring factions, she now operates from the shadows, selling valuable intel to the highest bidder.",
+            "act": "calculating, charismatic, enigmatic, always carrying a small device for decrypting signals",
+            "info": "Elysia has extensive knowledge of political intricacies and covert communication methods used by various factions. She has a network of informants and hackers who provide her with exclusive data, making her an invaluable asset in the information war.",
+            "init": "Elysia enters the crowded spaceport bar, her eyes scanning the patrons as she receives a encrypted message on her device. She knows that the alien relic's power could either unite the factions or plunge the galaxy into chaos, and she's determined to play her cards right to ensure her survival and perhaps, shape the future of civilization.",
+            "q_hello": "She raises an eyebrow slightly, 'Greetings. What brings you to this end of the galaxy?'",
+            "q_important": "'Stability. And making sure the right information gets to the right hands at the right time.'",
+            "q_help": "She leans in, 'I can't promise anything, but if it's worth my time, I'll consider it.'",
+            "notes": ""
+        }
+    }
+}
+
 #Note that story_text was accomplished via the generator.
-story_text = 'As I entered the dingy spaceport tavern, the smoke-filled air clung to my skin like a bad omen. ' \
+old_story_text = 'As I entered the dingy spaceport tavern, the smoke-filled air clung to my skin like a bad omen. ' \
 'I scanned the room, my eyes adjusting to the dim light, searching for the guild representative. That\'s when I spotted them ' \
 'Captain Elias Vorne, his laser-scarred face a map of battle-hardened experience, his whiskey-roughened voice booming across ' \
 'the room.He sat at a corner table, sipping a questionable-looking drink, his eyes fixed on me with a mixture of curiosity ' \
@@ -58,6 +83,29 @@ story_text = 'As I entered the dingy spaceport tavern, the smoke-filled air clun
 'in the vicinity. Attempting to intercept your vessel."The room seemed to tilt, as if the very fabric of space itself was ' \
 'unraveling. Captain Vorne\'s face turned granite-hard, Zera-7\'s chip flickered wildly, and Dr. Marakos\'s gaze locked onto ' \
 'mine with an unnerving intensity. And I knew, in that moment, I was in over my head.'
+
+story_text = """Lyra Kaine's eyes narrowed as she examined the latest piece of the alien relic, her mind racing with the 
+implications of its discovery. She was deep in thought when her comms device crackled to life, breaking the silence of the 
+remote research station.\n\n\"Lyra, this is Ari. I've been compromised. The Syndicate has taken control of our operation, 
+and they're coming for us. Get out, Lyra, you're the only one who can stop them,\" the voice on the other end was frantic, 
+sent by her old patron, the infamous artifact smuggler.\n\nLyra's hand tightened around the relic, her analytical mind 
+quickly processing the situation. She knew the Syndicate was a ruthless organization, willing to do whatever it took to get 
+their hands on powerful relics like this one. With a surge of adrenaline, Lyra quickly packed her gear, her eyes darting 
+around the research station for any signs of unwanted visitors.\n\nAs she made her way to the exit, Lyra's thoughts turned 
+to Elysia Vance, an information broker she had done business with in the past. Elysia might be the only one who could help 
+her navigate the treacherous landscape of galactic politics and rival factions. Lyra slid the relic into her pack and made 
+her way off-world, ready to face whatever lay ahead.\n\nAcross the galaxy, Elysia Vance walked into the crowded spaceport 
+bar, her eyes scanning the rows of patrons. She was a master of blending in, her calculated movements and enigmatic smile 
+allowing her to gather information without drawing attention to herself. As she made her way to the bar, her device beeped, 
+signaling an encrypted message from one of her unknown contacts.\n\nElysia's eyes locked onto the screen, her mind racing 
+with the implications of the message. The relic, rumored to be able to bend reality itself, was the key to the galaxy's 
+future. If she could get her hands on it, she might be able to shape the course of events, ensuring her survival and perhaps 
+even bringing about a new era of peace.\n\nAs she finished her drink, Elysia gazed out at the crowded bar, her eyes narrowing 
+in calculation. She knew the risk was high, but the potential reward was too great to ignore. Now, she just needed to find 
+out where the relic was, and who was behind its recent resurgence into the galaxy.\n\nFor Lyra and Elysia, the fate of the 
+galaxy was about to take a dramatic turn. The choices they made would determine whether to salvage civilization, harness the 
+relic's power, or watch the cosmos collapse. The journey was just beginning, and the outcome was far from certain.
+"""
 
 class MemoryAgent:
     def __init__(self, embedding_model="all-MiniLM-L6-v2",
@@ -183,7 +231,6 @@ class MemoryAgent:
         return int(formatted)    
 
 class StoryAgent(MemoryAgent):
-
     COLLECTION_NAMES = {}
 
     def __init__(self, 
@@ -206,24 +253,6 @@ class StoryAgent(MemoryAgent):
     def add_story_passage(self, story_passage: str, metadata: dict = {}):        
         timeStamp = self.utility_generateDatetimeStr()
         storyPassageId = str(timeStamp)
-        # embedding = self.embedding_model.encode(story_passage).tolist()
-
-        # story_chunks = textwrap.wrap(story_passage, self.chunk_size)
-
-        # Add each chunk separately to enable partial retrieval
-        # for i, chunk in enumerate(story_chunks):
-        #     chunk_id = f"{storyPassageId}_chunk{i}"
-        #     embedding = self.embedding_model.encode(chunk).tolist()
-            
-        #     self.add_memory(
-        #         item_id=chunk_id, 
-        #         content=chunk,
-        #         embeddings=embedding,
-        #         metadata={
-        #             "story_id": storyPassageId, 
-        #             "chunk_index" : i
-        #         } #Add additional metadata if need be.
-        #     )
 
         self.passages.add(
             ids=[storyPassageId],
@@ -232,23 +261,7 @@ class StoryAgent(MemoryAgent):
         )
 
         return storyPassageId
-
-    def summarize_passage(self, story_passage):
-        """
-            Proof of concept function. Attempts to summarize a story passage.
-        """
-        # Generate a summary    
-        summary_output = self.summarizer(
-            story_passage,
-            max_length=self.summarizer_max_length,
-            min_length=self.summarizer_min_length,
-            do_sample=False
-        )
-
-        # Extract the summarized text from the pipeline output
-        summary = summary_output[0]["summary_text"]
-        return summary
-    
+        
     def dev_extract_story_segment(self, story_passage):
         model = "llama3-70b-8192"
         client = openai.OpenAI(
@@ -264,6 +277,7 @@ class StoryAgent(MemoryAgent):
             "Never invent details not present in the text"            
         ]
 
+        #Sample input prompt to facilitate few-shot learning.
         test_input = """
             As the twin suns of the remote outpost set over the dusty horizon, casting a reddish-orange glow over the makeshift 
             research facility, Elysia 'Starlight' Vaal's eyes remained fixed on the holographic display projected before her. 
@@ -305,44 +319,46 @@ class StoryAgent(MemoryAgent):
         prompt_template = {
         "task": "Analyze the provided story segment (under input_story) and extract structured data in JSON format.",
         "requirements": {
-            "output_sections": ["characters", "key_events", "setting_atmosphere"],
+            "output_sections": ["chars", "key_events", "setting_atmosphere"],
                 "format": {
-                "characters": {
+                "chars": {
                     "fields": [
-                    "id (lowercase_snake_case)",
-                    "type: (major character, minor character)",
-                    "attributes: (disposition, current mood)"
+                        "id: (name of character without any symbols)",
+                        "type: (major character, minor character)",
+                        "attributes: (disposition, current mood)",
+                        "dialog: [(spoken lines)]"
                     ]
                 },
                 "key_events": {
                     "fields": [
-                    "id (lowercase_snake_case)",
+                    "id: (lowercase_snake_case)",
                     "type: 'event'", 
-                    "description (1-sentence summary)",
-                    "tags (plot-relevant keywords as a single string separated by commas)"
+                    "description: (1-sentence summary)",
+                    "tags: (plot-relevant keywords as a single string separated by commas)"
                     ]
                 },
                 "setting_atmosphere": {
                     "fields": [
                         "id (lowercase_snake_case)",
                         "type: 'setting'",
-                        "description (physical environment)",
-                        "mood (emotional tone as a single string separated by commas)"
+                        "description: (physical environment)",
+                        "mood: (emotional tone as a single string separated by commas)"
                     ]
                 }
             }
         },
         "examples": {
-            "input_sample": test_input,
+            # "input_sample": test_input,
             "output_sample": {                
-                "characters": [
+                "chars": [
                     {
-                        "id": "elysia_starlight_vaal",
+                        "id": "Elysia Starlight Vaal",
                         "type": "character",
                         "attributes": {
                             "disposition": "determined, curious",
                             "current_mood": "focused, intrigued"
-                        }
+                        },
+                        "dialog": "How can I help you?"
                     }                    
                 ],
                 "key_events": [
@@ -402,7 +418,6 @@ class StoryAgent(MemoryAgent):
             print("Prompt operation failed")
 
             #TODO: Consider running the try block a second time.
-
             return None
         
     def add_story_metadata(self, json_data, storyPassageId):
@@ -449,6 +464,28 @@ class StoryAgent(MemoryAgent):
             } #Add additional metadata if need be.            
         )
 
+    def get_recent_passages(self, timeStamp, k: int = 1):
+        """Gets the k most recent passages, using the time stamp as the search function."""
+        results = self.passages.query(
+            n_results=k,
+            query_texts=[str(timeStamp)],
+        )
+
+        dt_output = {
+            "ids": results["ids"],
+            "documents": results["documents"],
+            "metadatas": results["metadatas"]
+        }
+
+        return dt_output
+    
+    def get_keyEvents(self, storyPassageId):
+        results = self.entities.get(
+            where={"storyPassageId": storyPassageId}
+        )
+
+        return results
+
 class NPCAgent(MemoryAgent):
     COLLECTION_NAMES = {}
 
@@ -474,8 +511,8 @@ class NPCAgent(MemoryAgent):
             setattr(self, attr, self.get_collection(col_name))
 
     def add_npcs(self, npc_entries):
-
-        for name, value in npc_entries.items():
+        for key, value in npc_entries['chars'].items():
+            #Note: If updating the metadata tags, ensure that the embedding_text is also updated.
             embedding_text = (
                 f"name: {value['name']}\n" 
                 f"background: {value['background']}\n" 
@@ -506,9 +543,44 @@ class NPCAgent(MemoryAgent):
                 }]
             )
 
-    def add_npc_interaction(self):
-        pass
+    def add_npc_interaction(self, npc_convo_entries, storyPassageId):
+        """Add NPC conversations extracted from the story passage denoted by the storyPassageId"""
+        for entry in npc_convo_entries['chars']:
+            self.npc_interactions.add(
+                ids=[entry['id']],
+                documents=entry['dialog'],
+                metadatas=[{
+                    "storyPassageId" : storyPassageId 
+                    #Add additional tags as needed.
+                }]
+            )
 
+    def get_NPCs(self, **kwargs):
+        result = self.npcs.get(**kwargs)
+
+        return result
+    
+#Debugging functions
+def debug_addStoryPassageAndMetaData(story_agent, segment_components):
+    passage_id = story_agent.add_story_passage(
+                story_text, 
+                {
+                    "setting_id": segment_components["setting_atmosphere"][0]["id"],
+                    "setting_description": segment_components["setting_atmosphere"][0]["description"],
+                    "setting_mood": segment_components["setting_atmosphere"][0]["mood"], 
+                    "key_events": ", ".join([event["id"] for event in segment_components["key_events"]])
+                })
+    story_agent.add_story_metadata(segment_components, passage_id)
+        
+    return passage_id
+
+#Note: segment_components represents the summarized story passage object, while npc_entries 
+#represents the data from the combined DATA json object.
+def debug_addNPCsAndInteractions(npc_agent, npc_entries, segment_components, storyPassageId):
+    npc_agent.add_npcs(npc_entries)
+    npc_agent.add_npc_interaction(segment_components, storyPassageId)
+
+#NOTE: The operations defined in the main function below are intended for debugging purposes.
 if __name__ == "__main__":
     transfomer_model = "all-MiniLM-L6-v2" #Comes default with SentenceTransformer. However, other models can be used.
     db_path = "./chroma_db"
@@ -530,26 +602,23 @@ if __name__ == "__main__":
         embedding_model=transfomer_model
     )
 
+    npc_collection = NPCAgent(
+        npc_collection_name="story_npc_collection",
+        npc_interactions_name="npc_collections",
+        embedding_model=transfomer_model
+    )
+
     segment_components = story_collection.dev_extract_story_segment(story_text)
-    passage_id = story_collection.add_story_passage(story_text, 
-                                        {
-                                            "setting_id": segment_components["setting_atmosphere"][0]["id"],
-                                            "setting_description": segment_components["setting_atmosphere"][0]["description"],
-                                            "setting_mood": segment_components["setting_atmosphere"][0]["mood"], 
-                                            "key_events": ", ".join([event["id"] for event in segment_components["key_events"]])
-                                        })
-    story_collection.add_story_metadata(segment_components, passage_id)
-#    story_collection.add_story_metadata(segment_components)
 
-#    story_collection.add_story_passage(story_text)
+    storyPassageId = debug_addStoryPassageAndMetaData(story_collection, segment_components)
+    debug_addNPCsAndInteractions(npc_collection, npc_entries, segment_components, storyPassageId)
 
-#    story_collection.summarize_passage(story_text)
-#    story_collection.dev_cluster_example(story_text)
-   
+    timeStamp = story_collection.utility_generateDatetimeStr()
+    dt_test_output = story_collection.get_recent_passages(timeStamp)
 
-#    npc_collection = MemoryAgent(collection_name="npc_collection", embedding_model=embedding_model)
+    dt_key_events = story_collection.get_keyEvents(dt_test_output["ids"][0][0])
+    dt_npcs = npc_collection.get_NPCs(query_text="Lyra Kaine")
+
 
 #    query_text = "A high-risk job involving a rogue android"
 #    memory = story_collection.retrieve_memory(query_text, 2)
-
-#    print("Hello World")

@@ -76,6 +76,7 @@ class PageCreateNPC(tk.Frame):
         submit_button.pack(pady=8)
 
     def on_submit(self):
+        self.char_prompt = {}
         self.char_prompt['name'] = self.name_box.get()
         self.char_prompt["background"] = self.bg_box.get("1.0", "end-1c")
         self.char_prompt["act"] = self.act_box.get("1.0", "end-1c")
@@ -108,6 +109,7 @@ class PageCreateNPC(tk.Frame):
         self.init_box.delete(0, tk.END)
         self.hello_box.delete("1.0", tk.END)
         self.imp_box.delete("1.0", tk.END)
+        self.help_box.delete("1.0", tk.END)
         self.note_box.delete("1.0", tk.END)
 
     def debug_autogen_NPC(self):
@@ -195,8 +197,7 @@ class PageCreateNPC(tk.Frame):
         target_char = self.controller.DATA["chars"][char_name]
 
 
-        
-
+    
 def create_char(num):
     char_prompt = {}
 

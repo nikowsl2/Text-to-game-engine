@@ -331,6 +331,9 @@ class AppEngine(tk.Tk):
         self.beginning_line = None #The initial prompt displayed.
         self.story_memory = None
         self.npc_memory = None
+        self.json_story_summary = None
+
+        self.timestamp_lastPassage = None
         
         # Create a container frame to hold all the pages
         self.container = tk.Frame(self)
@@ -362,6 +365,8 @@ class AppEngine(tk.Tk):
         prompt = get_starting_prompt(self.DATA)
         beginning_line = get_response(client, MODEL_NAME, prompt).choices[0].message.content
 
+        
+
         self.DATA["target"] = "story"
         self.DATA["history"].append(["story", beginning_line])
         self.beginning_line = beginning_line
@@ -388,16 +393,20 @@ class AppEngine(tk.Tk):
 
         #Add initial story passage. 
         #TODO: Consider storing in separate function
-        json_story_summary = self.story_memory.dev_extract_story_segment(beginning_line)
-        story_passage_metadata = {
-            "setting_id": json_story_summary["setting_atmosphere"][0]["id"],
-            "setting_description": json_story_summary["setting_atmosphere"][0]["description"],
-            "setting_mood": json_story_summary["setting_atmosphere"][0]["mood"], 
-            "key_events": ", ".join([event["id"] for event in json_story_summary["key_events"]])
+        self.json_story_summary = self.story_memory.dev_extract_story_segment(beginning_line)
+
+        if B_DEBUG_MODE:
+            self.saveToJson()
+
+        story_passage_metadata = {            
+            "setting_id": self.json_story_summary ["setting_atmosphere"][0]["id"],
+            "setting_description": self.json_story_summary ["setting_atmosphere"][0]["description"],
+            "setting_mood": self.json_story_summary ["setting_atmosphere"][0]["mood"], 
+            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]])
         }
 
         passageId = self.story_memory.add_story_passage(beginning_line, story_passage_metadata)
-        self.story_memory.add_story_metadata(json_story_summary, passageId)
+        self.story_memory.add_story_metadata(self.json_story_summary , passageId)
 
     def initializeNPCMemory(self):
         story_title = self.DATA["story"]["title"]   
@@ -410,7 +419,7 @@ class AppEngine(tk.Tk):
         
         #Add initial npcs. 
         #TODO: Consider storing in separate function
-        self.npc_memory.add_npcs(self.DATA["chars"])
+        self.npc_memory.add_npcs(self.DATA)
 
     def displayPageGameInterface(self):
         self.initializeStoryMemory(self.beginning_line)
@@ -471,7 +480,13 @@ class AppEngine(tk.Tk):
                 """},
             ],
             stream=False
-        )        
+        )
+    
+    def saveToJson(self):
+        filename = self.DATA["story"]["title"] + ".json"
+        file = open(filename, 'w')
+        json.dump(self.DATA, file, indent=4)
+        file.close()
 
 class MainInterface(tk.Frame):
     """
@@ -611,20 +626,6 @@ class PageLoadStory(tk.Frame):
         beginning_line = get_last_story_segment(self.controller.DATA)
         run_generation(beginning_line)
 
-# class PageCreateNPC(tk.Frame):
-#     def __init__(self, master, controller):
-#         super().__init__(master)
-#         self.controller = controller
-        
-#         # Generic Code - Replace with implementation in NPC.py
-#         label = tk.Label(self, text="Create NPC", font=("Helvetica", 16))
-#         label.pack(pady=10)
-        
-#         # Back button to return to the Master Page
-#         back_button = tk.Button(self, text="Back",
-#                                  command=lambda: controller.show_frame("MainInterface"))
-#         back_button.pack(pady=5)
-
 class PageGameInterface(tk.Frame):
     def __init__(self, master, controller, beginning_line):
         super().__init__(master)
@@ -673,12 +674,14 @@ class PageGameInterface(tk.Frame):
 
         if input_type == "story":
             response = story_generation(client, MODEL_NAME, self.controller.DATA, user_text)
+
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
 
         elif input_type in self.controller.DATA["chars"].keys():
             dv = get_dev_message(get_initial_prompt(self.controller.DATA, input_type), self.controller.DATA["history"])
             response = get_response(client, dv, user_text).choices[0].message.content
+
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
 
