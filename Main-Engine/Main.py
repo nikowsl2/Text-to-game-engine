@@ -6,7 +6,7 @@ import re
 import tkinter as tk
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
-from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation, story_generation2, story_generation3, check_goal
+from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation,  check_goal
 
 
 HISTORY_FILE = "history.json"
@@ -169,37 +169,6 @@ def run_generation(beginning_line):
         text.see(tk.END)
         textbox.delete(0, tk.END)
 
-    def on_submit2():
-        user_text = textbox.get()
-        input_type = classifier(client, user_text).choices[0].message.content
-        print(input_type)
-        response = None
-        if input_type == "story":
-            response = story_generation2(client, MODEL_NAME, DATA, user_text)
-            DATA["history"].append(["User", user_text])
-            DATA["history"].append([input_type, response])
-        elif input_type in DATA["chars"].keys():
-            dv = get_dev_message(get_initial_prompt(
-                DATA, input_type), DATA["history"])
-            response = get_response(
-                client, dv, user_text).choices[0].message.content
-            DATA["history"].append(["User", user_text])
-            DATA["history"].append([input_type, response])
-        else:
-            messagebox.showerror(
-                "An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
-        if response is not None:
-            text.config(state="normal")
-            text.insert("end", f"\n")
-            text.insert("end", f"You: {user_text}\n\n", "user_text")
-            text.insert("end", f"{response}\n")
-            text.tag_configure("user_text", foreground="grey")
-            text.config(state="disabled")
-            text.see(tk.END)
-            textbox.delete(0, tk.END)
-        else:
-            messagebox.showwarning("Empty Input", "Please enter some text!")
-
         # Analyze the player's action in relation to the goal.
         status, reason, ending_line = check_goal(client, MODEL_NAME, DATA)
         if status == "progress":
@@ -218,37 +187,6 @@ def run_generation(beginning_line):
         text.config(state="disabled")
         text.see(tk.END)
         textbox.delete(0, tk.END)
-
-    def on_submit3():
-        user_text = textbox.get()
-        input_type = classifier(client, user_text).choices[0].message.content
-        print(input_type)
-        response = None
-        if input_type == "story":
-            response = story_generation3(client, MODEL_NAME, DATA, user_text)
-            DATA["history"].append(["User", user_text])
-            DATA["history"].append([input_type, response])
-        elif input_type in DATA["chars"].keys():
-            dv = get_dev_message(get_initial_prompt(
-                DATA, input_type), DATA["history"])
-            response = get_response(
-                client, dv, user_text).choices[0].message.content
-            DATA["history"].append(["User", user_text])
-            DATA["history"].append([input_type, response])
-        else:
-            messagebox.showerror(
-                "An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
-        if response is not None:
-            text.config(state="normal")
-            text.insert("end", f"\n")
-            text.insert("end", f"You: {user_text}\n\n", "user_text")
-            text.insert("end", f"{response}\n")
-            text.tag_configure("user_text", foreground="grey")
-            text.config(state="disabled")
-            text.see(tk.END)
-            textbox.delete(0, tk.END)
-        else:
-            messagebox.showwarning("Empty Input", "Please enter some text!")
 
         # Analyze the player's action in relation to the goal.
         status, reason, ending_line = check_goal(client, MODEL_NAME, DATA)
@@ -271,12 +209,6 @@ def run_generation(beginning_line):
     # Submit button
     submit_button = tk.Button(root, text="Generate", command=on_submit)
     submit_button.pack(pady=10)
-    submit_button2 = tk.Button(
-        root, text="Generate Sentences", command=on_submit2)
-    submit_button2.pack(pady=10)
-    submit_button3 = tk.Button(
-        root, text="Generate Paragraphs", command=on_submit3)
-    submit_button3.pack(pady=10)
 
     def save():
         filename = DATA["story"]["title"] + ".json"
