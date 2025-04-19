@@ -9,10 +9,11 @@ import chromadb
 import NPC
 import MemoryAgent
 
+# from chromadb import Collection
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
 from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation, check_goal
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer
 
 #Debugging Variables
 B_DEBUG_MODE = True
@@ -42,98 +43,6 @@ def get_client():
         base_url="https://api.groq.com/openai/v1"
     )
 
-#New Story Creation
-def run_mode1():
-    root = tk.Tk()
-    root.title("Story Creation")
-    root.geometry("960x540")
-
-    title_label = tk.Label(root, text="What is the title of the story?")
-    title_label.pack(pady=2)
-    title_box = tk.Entry(root, width=50)
-    title_box.pack(pady=10)
-
-    genre_label = tk.Label(root, text="What is the genre of the story?")
-    genre_label.pack(pady=2)
-    genre_box = tk.Entry(root, width=50)
-    genre_box.pack(pady=10)
-
-    num_char_label = tk.Label(root, text="How many Non-Player Characters would you like to add to the story (max 10)?")
-    num_char_label.pack(pady=2)
-    num_char_box = tk.Entry(root, width=50)
-    num_char_box.pack(pady=10)
-
-    story_label = tk.Label(root, text="Can you give us an overview of the story setup?")
-    story_label.pack(pady=2)
-    story_box = tk.Text(root, width=50, height=5)
-    story_box.pack(pady=10)
-
-    goal_label = tk.Label(root, text="What is the goal of the player character?")
-    goal_label.pack(pady=2)
-    goal_box = tk.Entry(root, width=50)
-    goal_box.pack(pady=10)
-
-    def on_submit():
-        title = title_box.get()
-        genre = genre_box.get()
-        num_char = num_char_box.get()
-        story = story_box.get("1.0", "end-1c")
-        goal = goal_box.get()
-        try:
-            num_char = int(num_char)
-        except ValueError:
-            messagebox.showerror("Invalid Number", "Please enter a valid number!")
-
-        DATA["story"] = {
-            "title": title.replace(" ", "_"),
-            "genre": genre,
-            "storyline": story,
-            "goal": goal
-        }
-        root.destroy()
-        for i in range(num_char):
-            try:
-                npc = create_char(i)
-                DATA["chars"][npc["name"]] = npc
-            except Exception as e:
-                messagebox.showerror("Error", f"Character creation failed: {str(e)}")
-
-        prompt = get_starting_prompt(DATA)
-        beginning_line = get_response(CLIENT, MODEL_NAME, prompt).choices[0].message.content
-        DATA["target"] = "story"
-        DATA["history"].append(["story", beginning_line])
-        run_generation(beginning_line)
-
-    next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
-    next_button.pack(pady=10)
-
-#Load Story Creation - based on code from StoryGenerator.
-def run_mode2():
-    root = tk.Tk()
-    root.title("Story Creation")
-    root.geometry("960x540")
-
-    title_label = tk.Label(root, text="What is the title of the story that you want to load?")
-    title_label.pack(pady=2)
-    title_box = tk.Entry(root, width=50)
-    title_box.pack(pady=10)
-
-    def on_submit():
-        title = title_box.get()
-        try:
-            filename = title.replace(" ", "_") + ".json"
-            with open(filename, 'r') as file:
-                DATA = json.load(file)
-            root.destroy()
-        except Exception as e:
-            messagebox.showerror("Error", f"Unable to open file: {str(e)}")
-
-        beginning_line = get_last_story_segment(DATA)
-        run_generation(beginning_line)
-
-    next_button = tk.Button(root, text="Next", font=("Arial", 16), command=on_submit, width=20)
-    next_button.pack(pady=10)
-
 class AppEngine(tk.Tk):
     """
         Main App Engine. Holds the variables accessed by every page frame within the App.
@@ -152,8 +61,8 @@ class AppEngine(tk.Tk):
             "history": []
         }
         self.beginning_line = None #The initial prompt displayed.
-        self.story_memory = None
-        self.npc_memory = None
+        self.story_memory = None   #Holds the StoryAgent class instance.
+        self.npc_memory = None     #Holds the MemoryAgent class instance.
         self.json_story_summary = None
 
         self.timestamp_lastPassage = None
@@ -345,8 +254,8 @@ class PageNewStory(tk.Frame):
     """
     def __init__(self, master, controller):
         super().__init__(master)
-        self.controller = controller
-        
+        self.controller = controller 
+                
         # Label for the master page
         label = tk.Label(self, text="New Story Creation", font=("Helvetica", 24))
         label.pack(pady=10)
@@ -486,6 +395,7 @@ class PageGameInterface(tk.Frame):
 
         # Textbox (Entry widget)
         self.textbox = tk.Entry(self, width=100)
+        self.textbox.bind("<Return>", self.on_enter_key)
         self.textbox.pack(pady=10)
 
         #save button
@@ -527,7 +437,8 @@ class PageGameInterface(tk.Frame):
             self.text.config(state="normal")
             self.text.insert("end", f"You: {user_text}\n")
             self.text.insert("end", f"{response}\n")
-            self.text.config(state="disabled")
+            self.text.tag_configure("user_text", foreground="grey")
+            self.text.config(state="disabled")            
             self.text.see(tk.END)
             self.textbox.delete(0, tk.END)
 
@@ -552,6 +463,10 @@ class PageGameInterface(tk.Frame):
         self.text.config(state="disabled")
         self.text.see(tk.END)
         self.textbox.delete(0, tk.END)
+
+    def on_enter_key(self, event):
+        self.on_submit()
+        return "break"
 
     def save(self):
         filename = self.controller.DATA["story"]["title"] + ".json"

@@ -1,2 +1,6 @@
 /chroma_db
 /Main-Engine/__pycache__
+Main-Engine/Main_NonRefactor.py
+Main-Engine/NPC_NonRefactor.py
+Main-Engine/StoryGenerator_NonRefactor.py
+Main-Engine/MemoryAgent_OLD.py

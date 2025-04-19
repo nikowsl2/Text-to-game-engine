@@ -219,6 +219,7 @@ def story_generation(client, model_name, data, user_text):
 
 def get_starting_prompt(data):
     characters_string = format_characters(data)
+    
     return f"""Please generate the beginning of a story using the following parameters:
                 The genre is: {data["story"]["genre"]}
                 The goal of the main character is: {data["story"]["goal"]}
@@ -227,7 +228,9 @@ def get_starting_prompt(data):
                 Please include the following characters with the provided details and starting conditions in a way that feels natural to the story:
                 {characters_string}
                 """
+
 def get_initial_gen(client, model_name, prompt):
+
     return client.chat.completions.create(
         model=model_name,
         messages=[

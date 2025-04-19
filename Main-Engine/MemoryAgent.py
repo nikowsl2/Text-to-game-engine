@@ -228,7 +228,13 @@ class MemoryAgent:
         formatted = f"{yy:02d}{mm:02d}{dd:02d}{hh:02d}{min:02d}{ss:02d}"
         
         # Convert to integer
-        return int(formatted)    
+        return int(formatted)
+    
+    def saveToJson(self, json_data, file_name):
+        filename = file_name + ".json"
+        file = open(filename, 'w')
+        json.dump(json_data, file, indent=4)
+        file.close()
 
 class StoryAgent(MemoryAgent):
     COLLECTION_NAMES = {}
@@ -274,7 +280,7 @@ class StoryAgent(MemoryAgent):
         model = "llama3-70b-8192"
         client = openai.OpenAI(
             api_key="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",
-            base_url="https://api.groq.com/openai/v1"            
+            base_url="https://api.groq.com/openai/v1"
         )
 
         constraints = [
@@ -282,46 +288,37 @@ class StoryAgent(MemoryAgent):
             # "Maintain consistent snake_case IDs for cross-referencing",
             "Include atmospheric cues as mood tags",
             "Limit event descriptions to 15 words",
-            "Never invent details not present in the text"            
+            "Never invent details not present in the text"
+            "The 'actions' field cannot be blank."
+            "The player cannot be a 'chars' entry."
         ]
 
         #Sample input prompt to facilitate few-shot learning.
         test_input = """
-            As the twin suns of the remote outpost set over the dusty horizon, casting a reddish-orange glow over the makeshift 
-            research facility, Elysia 'Starlight' Vaal's eyes remained fixed on the holographic display projected before her. 
-            Her advanced navigation software, affectionately dubbed "Nebula", hummed softly as it crunched massive amounts of 
-            data on the mysterious anomalies that had been plaguing the galaxy.
-
-            Elysia's fingers danced across the console, her mind whirling with theories and hypotheses. A former star 
-            cartographer, she had lost her ship and crew to one of these very anomalies, leaving her with a burning desire to 
-            understand their mechanisms and prevent further disasters. The silence of the outpost was a balm to her soul, 
-            allowing her to focus on her work without distraction.
-
-            The sudden shrill beep of her comms system shattered the peaceful atmosphere. Elysia's instincts kicked in, her 
-            heart rate steady as she reached for the console. A data-packet flickered into existence on the screen, the 
-            transmitted signal weak and garbled.
-
-            "Unidentified vessel...dis...es...tress...," the fractured message read.
-
-            Elysia's eyes narrowed. A distress signal was rare in these isolated regions, and the anomaly-ridden galaxies 
-            made any transmission a gamble. Yet, something about this one resonated with her. Perhaps it was the desperation 
-            that clung to the words like a lifeline, or the faint hint of fear that underscored the fragile signal.
-
-            Her mind racing with possibilities, Elysia called up the nearest constellation charts and began to triangulate 
-            the location of the distressed vessel. The outpost's distant sensors were already picking up anomalies, echoes 
-            of the cosmic phenomena that had ravaged the galaxy. Her advanced navigation software would take some time to 
-            compensate for the interference, but Elysia was convinced that this was no ordinary distress call.
-
-            With a deep breath, she sent a confirmation signal, promising aid to the struggling vessel. The crimson horizon 
-            outside seemed to darken in response, as if the very fabric of the universe was drawing her closer to the heart 
-            of the mystery.
-
-            Elysia smiled wistfully, knowing that her curiosity had gotten the better of her once more. It was time to leave 
-            the comforts of the outpost behind and venture into the great unknown, where the fates of civilizations and the 
-            cosmos hung in delicate balance.
-
-            Little did she know, the next jump would propel her into the midst of a desperate struggle, and the choices she 
-            made would decide the course of human destiny...
+            "Eldora \"Ironhide\" Thorns stood tall beside her caravan, her eyes scanning the bustling border checkpoint with a 
+            mix of scrutiny and calculation. The worn iron pendant around her neck seemed to gleam in the flickering torchlight,
+            a subtle reminder of her former life as a knight of the border patrol. Her reputation for unyielding protection 
+            had earned her the nickname \"Ironhide,\" and she wore it like a badge of honor. As she engaged in hushed 
+            conversation with a gruff border guard, Eldora's stern demeanor was a stark contrast to the warmth of the evening. 
+            The air was thick with the smells of exotic spices and fresh bread, and the sounds of merchants haggling and the 
+            occasional clang of metal on metal filled the air. Yet, Eldora's focus remained fixed on the task at hand: getting 
+            her precious cargo through the checkpoint without raising any unwanted attention.\n\n\"Tell me, Gorvoth,\" she 
+            pressed the guard, her voice low and steady, \"what's the word on the decree? Any changes since I last passed 
+            through?\"\n\nGorvoth, a grizzled veteran with a thick beard and a perpetual scowl, rubbed his chin thoughtfully. 
+            \"Ah, Eldora, you know as well as I do that the Alchemist's Council has been breathing down our necks. The decree 
+            remains unchanged: no magic ores are allowed to leave the kingdom. But,\" he leaned in closer, his voice taking 
+            on a conspiratorial tone, \"I heard rumors of...ah...creative interpretations. For the right price, of course.
+            \"\n\nEldora's eyes narrowed. She had heard similar whispers, but she was skeptical. The last thing she needed
+            was to trust some shadowy figure who might sell her out. \"What's the going rate for these...interpretations?\" 
+            she asked, her hand resting on the hilt of her sword.\n\nGorvoth chuckled, a low, gravelly sound. \"Ah, Eldora, 
+            you know as well as I do that prices are negotiable. But be warned: those who try to smuggle magic ores out 
+            of the kingdom won't be dealt with kindly. The alchemist's eyes are everywhere.\"\n\nEldora's gaze flickered 
+            back to her caravan, where the precious cargo lay hidden beneath layers of canvas and woven blankets. She had 
+            already taken extensive precautions to conceal the ores, but she knew that the alchemist's agents were cunning 
+            and relentless.\n\nAs she pondered her next move, Eldora's eyes met those of a hooded figure lurking at the edge 
+            of the checkpoint. For a fleeting moment, their gazes locked, and Eldora felt a shiver run down her spine. Were 
+            they friend or foe? She made a mental note to keep a watchful eye on this mysterious individual, for in a world 
+            where loyalty was the rarest commodity, appearances could be deceiving."
         """
 
         prompt_template = {
@@ -333,8 +330,9 @@ class StoryAgent(MemoryAgent):
                     "fields": [
                         "id: (name of character without any symbols)",
                         "type: (major character, minor character)",
-                        "attributes: (disposition, current mood)",
-                        "dialog: [(spoken lines)]"
+                        "attributes: (disposition towards player, current mood, cannot be blank)",
+                        "dialog: [(spoken lines)]",
+                        "actions: (1-sentence describing what the character is doing)"
                     ]
                 },
                 "key_events": {
@@ -356,39 +354,73 @@ class StoryAgent(MemoryAgent):
             }
         },
         "examples": {
-            # "input_sample": test_input,
+            "input_sample": test_input,
             "output_sample": {                
                 "chars": [
                     {
-                        "id": "Elysia Starlight Vaal",
-                        "type": "character",
+                        "id": "Eldora Ironhide Thorns",
+                        "type": "major character",
                         "attributes": {
-                            "disposition": "determined, curious",
-                            "current_mood": "focused, intrigued"
+                            "disposition": "",
+                            "current_mood": "calculating, stern"
                         },
-                        "dialog": "How can I help you?"
-                    }                    
+                        "dialog": [
+                            "Tell me, Gorvoth,",
+                            "what's the word on the decree? Any changes since I last passed through?",
+                            "What's the going rate for these...interpretations?"
+                        ],
+                        "actions": "Engaging in hushed conversation with Gorvoth, scanning the checkpoint"
+                    },
+                    {
+                        "id": "Gorvoth",
+                        "type": "minor character",
+                        "attributes": {
+                            "disposition": "",
+                            "current_mood": "thoughtful, conspiratorial"
+                        },
+                        "dialog": [
+                            "Ah, Eldora, you know as well as I do that the Alchemist's Council has been breathing down our necks.",
+                            "Ah, Eldora, you know as well as I do that prices are negotiable."
+                        ],
+                        "actions": "Rubbing his chin thoughtfully, leaning in closer"
+                    },
+                    {
+                        "id": "Hooded Figure",
+                        "type": "minor character",
+                        "attributes": {
+                            "disposition": "",
+                            "current_mood": "mysterious"
+                        },
+                        "dialog": [],
+                        "actions": "Lurking at the edge of the checkpoint, watching Eldora"
+                    }
                 ],
                 "key_events": [
                     {
-                        "id": "elysia_receives_distress_signal",
+                        "id": "eldora_meets_gorvoth",
                         "type": "event",
-                        "description": "Elysia intercepts a rare and fragmented distress signal from an unidentified vessel.",
-                        "tags": "distress_signal, mystery, anomalies"
+                        "description": "Eldora engages in conversation with Gorvoth at the border checkpoint.",
+                        "tags": "border_checkpoint, smuggling, magic_ores"
                     },
                     {
-                        "id": "elysia_confirms_aid",
+                        "id": "gorvoth_mentions_rumors",
                         "type": "event",
-                        "description": "Elysia decides to respond to the distress signal, preparing for immediate departure.",
-                        "tags": "decision, departure, danger"
+                        "description": "Gorvoth shares rumors of 'creative interpretations' of the decree.",
+                        "tags": "rumors, smuggling, magic_ores"
+                    },
+                    {
+                        "id": "eldora_notices_hooded_figure",
+                        "type": "event",
+                        "description": "Eldora notices a mysterious hooded figure watching her.",
+                        "tags": "mysterious_figure, suspicion"
                     }
                 ],
                 "setting_atmosphere": [
                     {
-                        "id": "remote_outpost",
+                        "id": "border_checkpoint",
                         "type": "setting",
-                        "description": "An isolated, makeshift research facility bathed in reddish-orange twilight from twin suns.",
-                        "mood": "isolated, tense, foreboding"
+                        "description": "A bustling border checkpoint with torchlight and exotic smells.",
+                        "mood": "tense, suspicious, warm"
                     }
                 ]
             }
@@ -420,10 +452,14 @@ class StoryAgent(MemoryAgent):
             ) 
 
             segments = json.loads(response.choices[0].message.content)
+
+            if B_DEBUG_MODE:
+                self.saveToJson(segments, "db_segments")
+
             return segments
 
         except Exception as e:
-            print("Prompt operation failed")
+            print(f"Prompt operation failed:\n{e}")
 
             #TODO: Consider running the try block a second time.
             return None
@@ -595,7 +631,7 @@ def debug_addNPCsAndInteractions(npc_agent, npc_entries, segment_components, sto
     npc_agent.add_npcs(npc_entries)
     npc_agent.add_npc_interaction(segment_components, storyPassageId)
 
-#NOTE: The operations defined in the main function below are intended for debugging purposes.
+#NOTE: The operations defined in the main function below are intended for debugging purposes outside of the Main app.
 if __name__ == "__main__":
     transfomer_model = "all-MiniLM-L6-v2" #Comes default with SentenceTransformer. However, other models can be used.
     db_path = "./chroma_db"
@@ -633,7 +669,3 @@ if __name__ == "__main__":
 
     dt_key_events = story_collection.get_keyEvents(dt_test_output["ids"][0][0])
     dt_npcs = npc_collection.get_NPCs(ids="Lyra Kaine")
-
-
-#    query_text = "A high-risk job involving a rogue android"
-#    memory = story_collection.retrieve_memory(query_text, 2)

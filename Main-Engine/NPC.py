@@ -98,7 +98,7 @@ class PageCreateNPC(tk.Frame):
             # self.npc_created_label.config(text=f"NPC Creation: {self.num_npcs_created} of {self.num_npcs}")
         else:
             #TODO: Initialize game frame
-            self.controller.generateStartingPrompts()      
+            self.controller.generateStartingPrompts() #First line in run_convo
             self.controller.displayPageGameInterface()
 
     def reset_form(self):
@@ -192,11 +192,6 @@ class PageCreateNPC(tk.Frame):
         self.hello_box.insert("1.0", segments["responses"]["q_hello"])
         self.imp_box.insert("1.0", segments["responses"]["q_important"])
         self.help_box.insert("1.0", segments["responses"]["q_help"])
-
-    def get_initial_prompt(self, char_name):
-        target_char = self.controller.DATA["chars"][char_name]
-
-
     
 def create_char(num):
     char_prompt = {}
@@ -310,6 +305,7 @@ def get_response(client, message, input):
         stream=False
     )
 
+#NOTE: This function has been copied over to Main.py -> PageGameInterface.__init__()
 def run_convo(char_prompt):
     prompt = get_initial_prompt(char_prompt)
     conversion_history = []
