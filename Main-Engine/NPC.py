@@ -192,7 +192,8 @@ class PageCreateNPC(tk.Frame):
         self.hello_box.insert("1.0", segments["responses"]["q_hello"])
         self.imp_box.insert("1.0", segments["responses"]["q_important"])
         self.help_box.insert("1.0", segments["responses"]["q_help"])
-    
+
+#NOTE: Consider deleting function as its functionality has been moved over to the PageCreateNPC class. 
 def create_char(num):
     char_prompt = {}
 
@@ -271,20 +272,23 @@ def create_char(num):
     return char_prompt
 
 def get_initial_prompt(data, char_name):
-    return (f"Please continue this conversation acting as a character with the following details: \n"
-            f"Your name is: {char_name}\n"
-            f"Your have the following background: {data['chars'][char_name]['background']} \n"
-            f"You behave in this way: {data['chars'][char_name]['act']}\n"
-            f"The only information you know is: {data['chars'][char_name]['info']}. You do not know anything beyond the mentioned scope \n"
-            f"Here are some examples of inputs and how you should respond:\n"
-            f"Input: \"Hello, how did you spend your day?\"\n"
-            f"Response: {data['chars'][char_name]['q_hello']}\n"
-            "Input: \"What is the most important thing in the world to you?\"\n"
-            f"Response: {data['chars'][char_name]['q_important']}\n"
-            "Input: \"Can you help me with something?\"\n"
-            f"Response: {data['chars'][char_name]['q_help']}\n"
-            f"And here is some more information about you: {data['chars'][char_name]['notes']}\n"
-            )
+    prompt_text = (
+        f"Please continue this conversation acting as a character with the following details: \n"
+        f"Your name is: {char_name}\n"
+        f"Your have the following background: {data['chars'][char_name]['background']} \n"
+        f"You behave in this way: {data['chars'][char_name]['act']}\n"
+        f"The only information you know is: {data['chars'][char_name]['info']}. You do not know anything beyond the mentioned scope \n"
+        f"Here are some examples of inputs and how you should respond:\n"
+        f"Input: \"Hello, how did you spend your day?\"\n"
+        f"Response: {data['chars'][char_name]['q_hello']}\n"
+        "Input: \"What is the most important thing in the world to you?\"\n"
+        f"Response: {data['chars'][char_name]['q_important']}\n"
+        "Input: \"Can you help me with something?\"\n"
+        f"Response: {data['chars'][char_name]['q_help']}\n"
+        f"And here is some more information about you: {data['chars'][char_name]['notes']}\n"
+    )
+
+    return prompt_text
 
 def get_dev_message(initial, hist):
     message = initial
@@ -368,7 +372,6 @@ def run_convo(char_prompt):
 
     # Run the application
     root.mainloop()
-
 
 if __name__ == "__main__":
     create_char()

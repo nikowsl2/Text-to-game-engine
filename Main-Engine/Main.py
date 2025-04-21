@@ -94,8 +94,23 @@ class AppEngine(tk.Tk):
         frame.tkraise()
 
     def generateStartingPrompts(self):
+        #TODO: Fill out system message.
+        system_message = """
+        You are a storywriter. Please generate the beginning of a story using the following parameters 
+        passed in the user prompt. The generated story passage should contain the following:
+        - Revolve around the main character (player). Refer to the main character as "you".
+        - Does not generate any speech lines for the main character. Assume a "silent protagonist".
+        - Incorporate at least one of the major characters into the passage noted in 'Characters:'
+        - Written in the present tense.
+        - Create a sentence at the end of the passage to encourage the player to decide on how to progress the story structured 
+        in the form of an open-ended question, without generating multiple choices. Give some hints on what the player could choose,
+          in context to the current location of the passage. Ensure that the hints presented take no more than a few hours of time to 
+          complete with respect to the story's current location.
+        - NPCs are never the main character.
+        """
+
         prompt = get_starting_prompt(self.DATA)
-        beginning_line = get_response(CLIENT, MODEL_NAME, prompt).choices[0].message.content
+        beginning_line = get_response(CLIENT, system_message, prompt).choices[0].message.content
 
         self.DATA["target"] = "story"
         self.DATA["history"].append(["story", beginning_line])
@@ -132,9 +147,10 @@ class AppEngine(tk.Tk):
 
         story_passage_metadata = {            
             "setting_id": self.json_story_summary ["setting_atmosphere"][0]["id"],
-            "setting_description": self.json_story_summary ["setting_atmosphere"][0]["description"],
+            "setting_description": self.json_story_summary["setting_atmosphere"][0]["description"],
             "setting_mood": self.json_story_summary ["setting_atmosphere"][0]["mood"], 
-            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]]),            
+            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]]),
+            "chars_present": self.json_story_summary["setting_atmosphere"][0]["chars_present"]
         } 
 
         #Add additional metadata depending on scenario.
@@ -143,7 +159,10 @@ class AppEngine(tk.Tk):
 
         passageId = self.story_memory.add_story_passage(response, story_passage_metadata)
         self.story_memory.add_story_metadata(self.json_story_summary, passageId)
-        self.timestamp_lastPassage = passageId        
+        self.timestamp_lastPassage = passageId
+
+        if B_DEBUG_MODE:
+            print(f"Added story passage with id: {passageId}")
 
     def initializeNPCMemory(self):
         story_title = self.DATA["story"]["title"]   
@@ -332,6 +351,9 @@ class PageNewStory(tk.Frame):
         #End debug fields        
 
 class PageLoadStory(tk.Frame):
+    """
+        Load Story Page
+    """
     def __init__(self, master, controller):
         super().__init__(master)
         self.controller = controller
@@ -414,14 +436,23 @@ class PageGameInterface(tk.Frame):
         response = None
 
         if input_type == "story":
-            response = story_generation(CLIENT, MODEL_NAME, self.controller.DATA, user_text)
+            timeStamp = self.controller.story_memory.utility_generateDatetimeStr()
+            latest_text = self.controller.story_memory.get_recent_passages(timeStamp)                    
+            associated_npcs = self.controller.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
+
+            response = story_generation(CLIENT, MODEL_NAME, self.controller.DATA, user_text, associated_npcs)
 
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
 
             self.controller.AddNewStoryPassage(response, user_text)
+    
 
         elif input_type in self.controller.DATA["chars"].keys():
+            timeStamp = self.controller.story_memory.utility_generateDatetimeStr()
+            latest_text = self.controller.story_memory.get_recent_passages(timeStamp)
+            associated_npcs = self.controller.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
+
             dv = get_dev_message(get_initial_prompt(self.controller.DATA, input_type), self.controller.DATA["history"])
             response = get_response(CLIENT, dv, user_text).choices[0].message.content
 
@@ -438,7 +469,7 @@ class PageGameInterface(tk.Frame):
             self.text.insert("end", f"You: {user_text}\n")
             self.text.insert("end", f"{response}\n")
             self.text.tag_configure("user_text", foreground="grey")
-            self.text.config(state="disabled")            
+            self.text.config(state="disabled") 
             self.text.see(tk.END)
             self.textbox.delete(0, tk.END)
 

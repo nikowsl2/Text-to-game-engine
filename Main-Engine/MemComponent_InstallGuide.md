@@ -1,4 +1,4 @@
-You can install the components referred in the requirements.txt using pip install -r <pathTo>/requirements.txt
+You can install the components referred in the requirements.txt using pip install -r <"pathTo">/requirements.txt
 
 If your python environment is newer than 3.10, it might be possible that you may encounter errors when attempting to install the chromadb package. This will require installing the Visual C++ build tool at: https://visualstudio.microsoft.com/visual-cpp-build-tools/ 
 

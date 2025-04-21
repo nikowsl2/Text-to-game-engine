@@ -113,6 +113,7 @@ class MemoryAgent:
         # Initialize the Chroma client and collection
         self.client = chromadb.PersistentClient(db_path)
         self.embedding_model = SentenceTransformer(embedding_model)
+        self.lastStoryTimePassage = None
 
         # Create or get the collection
         self._collections: dict[str, chromadb.Collection] = {}
@@ -135,80 +136,6 @@ class MemoryAgent:
     def remove_memory(self, collection: str, **kwargs):
         self.get_collection(collection).delete(**kwargs)
 
-    def old_add_memory(self, item_id: str, embeddings: list,  content: str = None, metadata: dict = {}):
-        """
-        Adds a new piece of memory (text + metadata) to the collection.
-        Each memory item has a unique item_id used for future retrieval or updates.
-        """
-        self.collection.add(
-            ids=[item_id],
-            documents=[content],
-            embeddings=embeddings,
-            metadatas=[metadata],            
-        )
-
-        if B_DEBUG_MODE:
-            print(f"[MemoryAgent] Added item_id={item_id} with content='{content}'")
-
-    def old_update_memory(self, item_id: str, new_content: str, new_metadata: dict = None):
-        """
-        Updates memory by first removing the old item, then adding the new content.
-        Alternatively, you could implement a specialized 'update' if your setup allows partial modifications.
-        """
-        # Remove old data
-        self.collection.delete(ids=[item_id])
-
-        # Insert new data
-        self.collection.add(
-            documents=[new_content],
-            metadatas=[new_metadata if new_metadata else {}],
-            ids=[item_id]
-        )
-
-        if B_DEBUG_MODE:
-            print(f"[MemoryAgent] Updated item_id={item_id} with new content='{new_content}'")
-
-    def old_remove_memory(self, item_id: str):
-        """
-        Removes an existing piece of memory from the collection by item_id.
-        """
-        self.collection.delete(ids=[item_id])
-
-        if B_DEBUG_MODE:
-            print(f"[MemoryAgent] Removed item_id={item_id}")
-
-    def old_retrieve_memory(self, collection: str, query: str, n_results: int = 5):
-        """
-        Retrieves the most relevant documents from the collection
-        based on the provided query text, returning up to n_results items.
-        """
-        query_embedding = self.embed_fn.encode(query).tolist()
-
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results
-        )
-
-        # results is a dictionary with 'documents', 'metadatas', 'ids', etc.
-        # For convenience, you can zip them up or just return the full dictionary.
-        
-        # Example: Combine each match into a tuple or dict
-        combined_results = []
-        for doc, meta, mem_id, distance in zip(
-            results["documents"][0],
-            results["metadatas"][0],
-            results["ids"][0],
-            results["distances"][0]
-        ):
-            combined_results.append({
-                "id": mem_id,
-                "document": doc,
-                "metadata": meta,
-                "distance": distance
-            })
-        
-        return combined_results
-    
     def utility_generateDatetimeStr(self):
         """
             Utility function to generate a timestamp to create a unique id for each entry.             
@@ -230,6 +157,9 @@ class MemoryAgent:
         # Convert to integer
         return int(formatted)
     
+    def get_last_story_timestamp(self):
+        return self.lastStoryTimePassage
+
     def saveToJson(self, json_data, file_name):
         filename = file_name + ".json"
         file = open(filename, 'w')
@@ -256,26 +186,6 @@ class StoryAgent(MemoryAgent):
         for attr, col_name in self.COLLECTION_NAMES.items():
             setattr(self, attr, self.get_collection(col_name))
 
-    def add_story_passage(self, story_passage: str, metadata: dict = {}):        
-        timeStamp = self.utility_generateDatetimeStr()
-        storyPassageId = str(timeStamp)
-
-        self.passages.add(
-            ids=[storyPassageId],
-            documents=[story_passage],
-            metadatas=[metadata]
-        )
-
-        if B_DEBUG_MODE:
-            base_str_output = "New Story Passage added with the following metadata:\n"
-
-            for key, value in metadata.items():
-                base_str_output += f"{key} : {value}\n"
-            
-            print(base_str_output)
-
-        return storyPassageId
-        
     def extract_story_segment(self, story_passage):
         model = "llama3-70b-8192"
         client = openai.OpenAI(
@@ -288,9 +198,10 @@ class StoryAgent(MemoryAgent):
             # "Maintain consistent snake_case IDs for cross-referencing",
             "Include atmospheric cues as mood tags",
             "Limit event descriptions to 15 words",
-            "Never invent details not present in the text"
-            "The 'actions' field cannot be blank."
-            "The player cannot be a 'chars' entry."
+            "Never invent details not present in the text",
+            "The 'actions' field cannot be blank.",
+            "The player (including 'You') cannot be a 'chars' entry.",
+            "The player (including 'You') cannot be in the 'chars_present' entry."
         ]
 
         #Sample input prompt to facilitate few-shot learning.
@@ -331,7 +242,7 @@ class StoryAgent(MemoryAgent):
                         "id: (name of character without any symbols)",
                         "type: (major character, minor character)",
                         "attributes: (disposition towards player, current mood, cannot be blank)",
-                        "dialog: [(spoken lines)]",
+                        "dialog: [{target_character : (spoken_line)}",
                         "actions: (1-sentence describing what the character is doing)"
                     ]
                 },
@@ -349,6 +260,7 @@ class StoryAgent(MemoryAgent):
                         "type: 'setting'",
                         "description: (physical environment)",
                         "mood: (emotional tone as a single string separated by commas)"
+                        "chars_present: (characters mentioned in story passage except the player (or 'You'), separated by commas)"
                     ]
                 }
             }
@@ -365,9 +277,14 @@ class StoryAgent(MemoryAgent):
                             "current_mood": "calculating, stern"
                         },
                         "dialog": [
-                            "Tell me, Gorvoth,",
-                            "what's the word on the decree? Any changes since I last passed through?",
-                            "What's the going rate for these...interpretations?"
+                            {
+                                "target_character": "Gorvoth",
+                                "spoken_line": "Tell me, Gorvoth, what's the word on the decree? Any changes since I last passed through?"
+                            },
+                            {
+                                "target_character": "Gorvoth",
+                                "spoken_line": "What's the going rate for these...interpretations?"
+                            }
                         ],
                         "actions": "Engaging in hushed conversation with Gorvoth, scanning the checkpoint"
                     },
@@ -379,8 +296,14 @@ class StoryAgent(MemoryAgent):
                             "current_mood": "thoughtful, conspiratorial"
                         },
                         "dialog": [
-                            "Ah, Eldora, you know as well as I do that the Alchemist's Council has been breathing down our necks.",
-                            "Ah, Eldora, you know as well as I do that prices are negotiable."
+                            {
+                                "target_character": "Eldora",
+                                "spoken_line": "Ah, Eldora, you know as well as I do that the Alchemist's Council has been breathing down our necks. The decree remains unchanged: no magic ores are allowed to leave the kingdom. But, I heard rumors of...ah...creative interpretations. For the right price, of course."
+                            },
+                            {
+                                "target_character": "Eldora",
+                                "spoken_line": "Ah, Eldora, you know as well as I do that prices are negotiable. But be warned: those who try to smuggle magic ores out of the kingdom won't be dealt with kindly. The alchemist's eyes are everywhere."
+                            }
                         ],
                         "actions": "Rubbing his chin thoughtfully, leaning in closer"
                     },
@@ -420,7 +343,8 @@ class StoryAgent(MemoryAgent):
                         "id": "border_checkpoint",
                         "type": "setting",
                         "description": "A bustling border checkpoint with torchlight and exotic smells.",
-                        "mood": "tense, suspicious, warm"
+                        "mood": "tense, suspicious, warm",
+                        "chars_present": "Eldora, Gorvoth, Hooded Figure"
                     }
                 ]
             }
@@ -464,6 +388,27 @@ class StoryAgent(MemoryAgent):
             #TODO: Consider running the try block a second time.
             return None
         
+    def add_story_passage(self, story_passage: str, metadata: dict = {}):        
+        timeStamp = self.utility_generateDatetimeStr()
+        storyPassageId = str(timeStamp)
+        self.lastStoryTimePassage = timeStamp
+
+        self.passages.add(
+            ids=storyPassageId,
+            documents=story_passage,
+            metadatas=metadata
+        )
+
+        if B_DEBUG_MODE:
+            base_str_output = "New Story Passage added with the following metadata:\n"
+
+            for key, value in metadata.items():
+                base_str_output += f"{key} : {value}\n"
+            
+            print(base_str_output)
+
+        return storyPassageId
+
     def add_story_metadata(self, json_data, storyPassageId):
         key_events = json_data["key_events"]
         setting_atmosphere = json_data["setting_atmosphere"]
@@ -497,6 +442,7 @@ class StoryAgent(MemoryAgent):
             f"Setting ID: {setting_atmosphere[0]['id']}\n"
             f"Description: {setting_atmosphere[0]['description']}\n"
             f"Mood: {setting_atmosphere[0]['mood']}\n"
+            f"Chars Present: {setting_atmosphere[0]["chars_present"]}\n"
         )
 
         self.entities.add(
@@ -507,12 +453,13 @@ class StoryAgent(MemoryAgent):
                 "storyPassageId": storyPassageId,
                 "type": setting_atmosphere[0]["type"], 
                 "description": setting_atmosphere[0]["description"],
-                "mood": setting_atmosphere[0]["mood"]
+                "mood": setting_atmosphere[0]["mood"],
+                "chars_present" : setting_atmosphere[0]["chars_present"]
             } #Add additional metadata if need be.            
         )
 
         if B_DEBUG_MODE:
-                print(f"Added setting: {setting_atmosphere[0]['id']} : {setting_atmosphere[0]['description']} based on storyPassageId: {storyPassageId}")
+            print(f"Added setting: {setting_atmosphere[0]['id']} : {setting_atmosphere[0]['description']} based on storyPassageId: {storyPassageId}")
 
 
     def get_recent_passages(self, timeStamp, k: int = 1):
@@ -522,10 +469,11 @@ class StoryAgent(MemoryAgent):
             query_texts=[str(timeStamp)],
         )
 
+        #Need to reference the first index, otherwise we get a nested array for the output.
         dt_output = {
-            "ids": results["ids"],
-            "documents": results["documents"],
-            "metadatas": results["metadatas"]
+            "ids": results["ids"][0],
+            "documents": results["documents"][0],
+            "metadatas": results["metadatas"][0]
         }
 
         return dt_output
@@ -562,6 +510,10 @@ class NPCAgent(MemoryAgent):
             setattr(self, attr, self.get_collection(col_name))
 
     def add_npcs(self, npc_entries):
+
+        if self.lastStoryTimePassage is None:
+            self.lastStoryTimePassage = self.utility_generateDatetimeStr()
+
         for key, value in npc_entries['chars'].items():
             #Note: If updating the metadata tags, ensure that the embedding_text is also updated.
             embedding_text = (
@@ -573,7 +525,8 @@ class NPCAgent(MemoryAgent):
                 f"q_react_hello: {value['q_hello']}\n"
                 f"q_react_important: {value['q_important']}\n"
                 f"q_react_help: {value['q_help']}\n"
-                f"q_notes: {value['notes']}\n"
+                f"notes: {value['notes']}\n"
+                f"timeStamp_lastSeen: {self.lastStoryTimePassage}"
             )
             embedding = self.embedding_model.encode(embedding_text)
 
@@ -590,9 +543,14 @@ class NPCAgent(MemoryAgent):
                     "q_hello": value['q_hello'],
                     "q_important": value['q_important'],
                     "q_help": value['q_help'],
-                    "q_notes": value['notes']
+                    "notes": value['notes'],
+                    "timeStamp_lastSeen": self.lastStoryTimePassage
                 }]
             )
+
+            if B_DEBUG_MODE:
+                print(f"Added NPC_entry {key}: background: {value['background']}, traits: {value['act']}, "
+                      f"timeStamp_lastSeen: {self.lastStoryTimePassage}")
 
     def add_npc_interaction(self, npc_convo_entries, storyPassageId):
         """Add NPC conversations extracted from the story passage denoted by the storyPassageId"""
@@ -601,7 +559,8 @@ class NPCAgent(MemoryAgent):
                 ids=[entry['id']],
                 documents=entry['dialog'],
                 metadatas=[{
-                    "storyPassageId" : storyPassageId
+                    "storyPassageId" : str(storyPassageId),
+                    "dialog" : [1, 2]
                     #Add additional tags as needed.
                 }]
             )
@@ -610,6 +569,47 @@ class NPCAgent(MemoryAgent):
         result = self.npcs.get(**kwargs)
 
         return result
+    
+    def get_NPCs_at_storyPassageId(self, storyPassageId):
+        results = self.npcs.query(
+            query_texts=str(storyPassageId),            
+        )
+
+        #Need to reference the first index, otherwise we get a nested array for the output.
+        dt_output = {
+            "ids": results["ids"][0],
+            "documents": results["documents"][0],
+            "metadatas": results["metadatas"][0]
+        }
+
+        formatted_output = self.format_NPC_data(dt_output)
+
+        return formatted_output
+
+    def format_NPC_data(self, npcs):
+        """
+        Formats the NPC data in preparation for inserting into a prompt.
+
+        Ensure that the npcs parameter is the output generated by get_NPCs_at_storyPassageId.
+        
+        """
+        dt_output = {"chars" : {}}
+        for i in range(len(npcs['ids'])):            
+            dt_entry = {}
+            dt_entry['name'] = npcs['ids'][i]
+            dt_entry['background'] = npcs['metadatas'][i]['background']
+            dt_entry['act'] = npcs['metadatas'][i]['act']
+            dt_entry['info'] = npcs['metadatas'][i]['info']
+            dt_entry['init'] = npcs['metadatas'][i]['init']
+            dt_entry['q_hello'] = npcs['metadatas'][i]['q_hello']
+            dt_entry['q_important'] = npcs['metadatas'][i]['q_important']
+            dt_entry['q_help'] = npcs['metadatas'][i]['q_help']
+            dt_entry['notes'] = npcs['metadatas'][i]['notes']
+
+            # dt_output['chars'].append(dt_entry)
+            dt_output['chars'][dt_entry['name']] = dt_entry
+
+        return dt_output
     
 #Debugging functions
 def debug_addStoryPassageAndMetaData(story_agent, segment_components):
