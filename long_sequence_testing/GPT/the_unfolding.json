@@ -1,0 +1,90 @@
+{
+    "chars": {
+        "alistair": {
+            "name": "Alistair Graves",
+            "background": "Disgraced Oxford parapsychologist",
+            "act": "Skeptical but haunted by what he's seen",
+            "info": "Carries a silver pocket watch that sometimes runs backward",
+            "init": "Investigate the Blackwick Asylum disappearances",
+            "q_hello": "Speak plainly. Ghosts hate pretense more than I do.",
+            "q_important": "Find out what happened to the missing patients",
+            "q_help": "Need access to the asylum's sealed east wing",
+            "notes": "His reflection sometimes blinks when he doesn't"
+        },
+        "lydia": {
+            "name": "Lydia Veil",
+            "background": "Asylum director's daughter turned medium",
+            "act": "Eerie calm masking deep trauma",
+            "info": "Bears scars matching 19th-century surgical diagrams",
+            "init": "Guide Alistair through the asylum's secrets",
+            "q_hello": "The walls are listening, professor. Choose your words carefully.",
+            "q_important": "Discover why the mirrors won't reflect certain people",
+            "q_help": "Requires fresh lavender to suppress the voices",
+            "notes": "Her shadow moves 3 seconds behind her"
+        },
+        "dr. veil": {
+            "name": "Dr. Veil",
+            "background": "Head Surgeon and Keeper of the East Wing",
+            "act": "Mysterious, authoritative, and unsettlingly calm; speaks in riddles and commands respect through presence rather than words",
+            "info": "Presides over the operating theatre-nursery at the heart of the east wing; rumored to have performed impossible surgeries and to possess knowledge of both healing and harm that spans centuries; intimately familiar with the histories of all patients and doctors who have passed through the wing",
+            "init": "",
+            "q_hello": "",
+            "q_important": "",
+            "q_help": "",
+            "notes": ""
+        }
+    },
+    "history": [
+        [
+            "story",
+            "### PROLOGUE: THE THIRTEENTH PATIENT\n\nThe letter arrived sealed with wax the color of dried blood. Alistair turned it in the firelight, the embossed 'B' of Blackwick Asylum pressing into his thumb. Inside, a single line: *They took thirteen this month. Only twelve came back.* The accompanying photograph showed a patient intake ledger from 1893\u2014and an identical one from last week. Same names. Same handwriting. The asylum's director, Dr. Veil, had been dead for seventy years. Rain lashed the windows of Alistair's study as his pocket watch chimed thirteen times. When he looked up, his reflection in the window mouthed words he couldn't hear. The train ticket tucked behind the photo bore tomorrow's date. No return journey. Outside, something scratched at the glass with fingernails that hadn't existed since the Victorian era."
+        ],
+        [
+            "User",
+            ""
+        ],
+        [
+            "story",
+            "### CHAPTER I: THE WHISPERING STAIRS\n\nThe asylum's gates shrieked like a tortured thing. Alistair's suitcase sank into the mud as he faced Blackwick's soot-stoned facade. No lights burned in the windows, yet the front door stood ajar. 'You're late,' said a voice like rustling grave clothes. Lydia Veil emerged from the shadows, her black dress blending with the ivy. 'Father's been expecting you.' Alistair followed her through corridors that smelled of laudanum and wet earth. The stairs groaned underfoot, each step whispering names\u2014*Eleanor, James, Charlotte*\u2014in voices that couldn't possibly exist. Lydia paused at a water-stained wall. 'This is where they found the first one. No marks. Just... emptied.' Alistair's watch chimed. Lydia's head snapped toward it. 'That shouldn't be working here.' Behind them, a wheelchair rolled down the hall of its own accord. The patient ledger lay open on a side table. Alistair's finger traced the names\u2014then froze. His own handwriting stared back from an 1893 entry. Lydia's breath fogged the air despite the summer heat. 'The walls remember everything, professor. Even what hasn't happened yet.'"
+        ],
+        [
+            "story",
+            "### CHAPTER II: THE UNFOLDING ROOM\n\nThe east wing's door hadn't been opened in decades. The lock yielded to Alistair's picks with disturbing ease. Inside, the air tasted of copper and burnt hair. Lydia's lantern revealed walls papered with surgical diagrams\u2014each depicting procedures impossible for the era. 'They called it 'unfolding,'' she whispered. 'Making room for more souls.' Alistair's watch began spinning wildly. The floorboards creaked under footsteps that weren't theirs. A child's laughter echoed from a room with no door. Then they found it\u2014the thirteenth patient's bed. Perfectly made. The pillow bore the indent of a head. Fresh. Lydia touched the sheets and recoiled. 'Still warm.' Alistair examined the bedside table. A book of Psalms. A teacup with dregs still wet. And a modern smartphone charging beside an oil lamp. The screen lit up as he approached, displaying a single notification: *Missed call from Alistair Graves.* Lydia backed toward the door. 'We shouldn't be here when it comes back.' The lantern flickered. Something sighed against Alistair's neck. His watch chimed thirteen times."
+        ],
+        [
+            "story",
+            "### CHAPTER III: THE MIRROR MAZE\n\nThe asylum's bathing room stretched farther than physics allowed, its cracked mirrors reflecting versions of Lydia that didn't match. One showed her in a straightjacket. Another in a burial shroud. 'Don't look too long,' she warned. 'Mirrors are doors here.' Alistair's reflection reached out as they passed. His watch hands now moved counterclockwise. They found Dr. Veil's notes hidden behind a loose tile\u2014pages of meticulous handwriting detailing 'soul grafting' experiments. The final entry made Alistair's blood freeze: *Patient 13 successful. The vessel accepts memories but rejects the flesh.* Lydia traced the scars on her wrists\u2014exact matches to the diagrams. 'I died here in 1893,' she said matter-of-factly. 'But something walked out wearing my face.' The mirrors began weeping tarnished silver. Alistair's pocket watch chimed again. This time, thirteen figures appeared in the glass behind them. All wore his face. All mouthed the same word: *Soon.*"
+        ],
+        [
+            "story",
+            "### CHAPTER IV: THE BLOOD HARMONY\n\nThe asylum chapel's pipe organ played itself, its bellows pumping without air. Lydia pressed lavender to her temples as the hymn *Dies Irae* vibrated through the floorboards. 'They're waking up,' she said. The pews were filled with shadows that flickered between Victorian garb and modern patient uniforms. Alistair found fresh wax dripping from the candelabras. 'This place exists in multiple times simultaneously.' Lydia's shadow finally stilled\u2014three seconds ahead of her now. The organ reached a crescendo as the stained glass window illuminated, revealing a hidden inscription: *The thirteenth is the key.* Alistair's watch stopped dead. Lydia grabbed his arm. 'It's here.' The chapel doors slammed shut. From the confessionals, wet footsteps approached. A patient ledger materialized on the altar, its pages flipping wildly. The most recent entry glowed fresh ink: *Patient 13: A. Graves. Diagnosis: Temporal Displacement. Treatment: Complete Unfolding.* The organ's final chord shook dust from the rafters. Lydia's voice came out in someone else's timbre: 'It always ends this way. The question is\u2014which iteration are you?'"
+        ],
+        [
+            "story",
+            "### CHAPTER V: THE UNFOLDED ONES\n\nThe east wing had changed. Alistair's lantern revealed walls pulsating like living tissue. Doors appeared where none existed, each bearing a nameplate that shifted between patients and doctors. Lydia's scars now glowed faintly blue. 'We're inside the procedure now,' she said. 'Time is the first thing they unfold.' The hallway stretched infinitely in both directions. Somewhere, a gramophone played a waltz from 1893\u2014except the melody incorporated modern electronic beats. Alistair's watch began screaming a high-pitched whine. The floorboards peeled back to reveal surgical tools embedded in the foundation. 'They're not removing souls,' Lydia realized. 'They're layering them.' A door marked *13* appeared ahead. Through its keyhole, Alistair saw himself strapped to an operating table\u2014both in Victorian dress and modern clothes simultaneously. His reflection in a broken hallway mirror whispered: *You volunteered for this.* Lydia's shadow finally detached completely, skittering up the wall. The door handle turned from within."
+        ],
+        [
+            "story",
+            "### CHAPTER VI: THE SHADOW ARCHIVE\n\nThe asylum's records room was a cathedral of filing cabinets stretching into darkness. Lydia's lantern revealed labels like *Memories: 1890-1895* and *Dreams: Unassigned.* Alistair pulled a drawer marked *Graves, A.* It contained photographs of himself in periods ranging from 1842 to 2023. 'This is impossible,' he breathed. Lydia examined a specimen jar holding a floating human eye that tracked them. 'Not impossible. Just folded.' The cabinets began rearranging themselves, revealing a central desk where a fresh document waited: *Unfolding Consent Form.* The signature matched Alistair's handwriting across six different centuries. Lydia touched the paper and gasped\u2014her fingers passed through it. 'We're becoming unstuck.' The lantern flickered. Figures emerged from the aisles\u2014doctors and patients from various eras, all bearing Alistair's face in different stages of decomposition. One whispered: *The thirteenth fold is where we meet ourselves.* The cabinets collapsed into a singularity of paper and dust. Only one record remained floating\u2014a birth certificate for Lydia Veil... dated next year."
+        ],
+        [
+            "story",
+            "### CHAPTER VII: THE LAVENDER EFFECT\n\nThe asylum's greenhouse thrived with unnatural vitality. Lydia collapsed into a bed of lavender, her scars now pulsing in time with Alistair's watch. 'It's in the plants,' she panted. 'They feed on temporal energy.' The glass panes showed conflicting scenes\u2014a blizzard outside one, a heatwave outside another. Alistair found fresh soil piled in thirteen mounds. The first twelve contained personal effects\u2014a nurse's cap, a child's doll, a surgeon's scalpel. The thirteenth was empty. 'Your turn,' whispered the plants. Lydia's shadow reappeared\u2014now leading her by seven seconds. She grabbed Alistair's wrist. 'The watch isn't broken. It's counting down.' The greenhouse door slammed shut as the lavender burst into unnatural blue flame. Through the smoke, a figure approached\u2014Dr. Veil in his surgical apron, holding a tray of instruments that glowed with inner light. 'Ah,' he said pleasantly. 'Just in time for your unfolding.' The watch chimed once. The lavender ash formed a perfect arrow pointing back toward the east wing."
+        ],
+        [
+            "User",
+            "continue"
+        ],
+        [
+            "story",
+            "Lydia\u2019s eyes widened as the arrow of lavender ash smoldered, its blue flames licking along the greenhouse floor. She staggered to her feet, the pulsing of her scars synchronizing with the desperate tick of Alistair\u2019s watch. The air thickened, scented with burnt herbs and ozone. Shadows clustered at the edges of the shattered glass, whispering fragments of nursery rhymes and surgical instructions in voices that stuttered between centuries.\n\nWithout a word, Lydia pressed onward, following the arrow\u2019s direction. Her footsteps left prints of frost on the flagstones despite the hothouse heat. The greenhouse door, once sealed, now hung ajar, its hinges warped into the shapes of numbers\u2014thirteen, always thirteen. The corridor beyond had changed again. The walls breathed in and out, exhaling petals and whispers. Faded portraits of patients and doctors flickered as they passed, their eyes tracking Lydia and Alistair with knowing resignation.\n\nAt the far end, the east wing\u2019s threshold loomed. The door marked *13* had grown larger, its wood slick with something that looked like both sap and blood. The handle, now cold and metallic, pulsed in time with the watch. Lydia hesitated, her shadow lagging a full heartbeat behind her. Behind the door, the sounds of surgical saws and muffled prayers tangled with the waltz\u2019s discordant melody.\n\nShe reached for the handle, her hand trembling. The lavender flames from the greenhouse had left blue stains on her skin. As the door creaked open, a rush of frigid air swept over them, carrying the scent of antiseptic and winter violets. The room beyond was both an operating theatre and a nursery, cots and gurneys arranged in a circle. Twelve figures lay beneath shrouds, their outlines shifting between child and adult, patient and doctor.\n\nAt the center stood Dr. Veil, his face blurred by the flicker of gaslight and fluorescence. He raised his tray of instruments, each tool casting a shadow that writhed and split, forming the silhouettes of all those who had come before. The thirteenth bed awaited, its sheets pristine. Lydia\u2019s scars flared, casting pale blue light across the room.\n\nThe pocket watch in Alistair\u2019s grasp began to unwind, spinning faster and faster, its hands a blur. The walls shuddered, and the twelve shrouded figures began to rise, their voices overlapping in a broken hymn. Lydia swayed, her gaze locked on the empty bed. The time for the final unfolding had come."
+        ]
+    ],
+    "story": {
+        "title": "the_unfolding",
+        "genre": "gothic horror",
+        "storyline": "A skeptical parapsychologist and a traumatized medium investigate an asylum where patients vanish into different time periods, uncovering a Victorian experiment that never ended",
+        "goal": "Discover the truth behind the thirteenth patient, survive the unfolding process, and escape the asylum's temporal loop"
+    },
+    "target": "story"
+}

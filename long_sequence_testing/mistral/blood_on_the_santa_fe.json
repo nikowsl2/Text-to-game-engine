@@ -1,0 +1,83 @@
+{
+    "chars": {
+        "cassidy": {
+            "name": "Cassidy 'The Pale' Hart",
+            "background": "Ex-outlaw turned bounty hunter with a shadowy past",
+            "act": "World-weary but sharp as a rattler's fang",
+            "info": "Carries a modified Schofield revolver with one chamber always empty",
+            "init": "Track the missing saloon girl Lila Rose",
+            "q_hello": "Spit it out. I ain't got whiskey enough for long stories.",
+            "q_important": "Find out who's smuggling guns to the Comancheros",
+            "q_help": "Need a guide who knows the Red Dust canyons",
+            "notes": "Has a recurring dream of a noose tightening"
+        },
+        "doc": {
+            "name": "Doc 'Bleeding' Holloway",
+            "background": "Disgraced surgeon turned opium-addicted coroner",
+            "act": "Morbidly poetic with a surgeon's precision",
+            "info": "Keeps detailed files on every unsolved death in the territory",
+            "init": "Help Cassidy connect the bodies",
+            "q_hello": "Another corpse for my collection, Hart?",
+            "q_important": "Prove Sheriff Grady's involvement",
+            "q_help": "Requires clean morphine for his tremors",
+            "notes": "Hides a scalp with Lila Rose's hair color in his trunk"
+        }
+    },
+    "history": [
+        [
+            "story",
+            "### PROLOGUE: BLOOD ON THE PRARIE\n\nThe coyotes were feeding when Cassidy rode up. What was left of the stagecoach driver lay sprawled in the alkali dust, his face chewed down to the bone. Cassidy nudged the corpse with his boot, revealing the man's pinned badge\u2014a tin star half-melted from gunfire. 'Well hell,' he muttered, spitting tobacco. 'That's the third lawman this month.' The tracks told a story: six riders, Army-issue hoof marks, heading toward the Red Dust canyons. But it was the bullet hole that caught his eye\u2014clean entry, no exit. Only one gun in the territory shot .45s that neat: his own modified Schofield. The sun hung low like a rotten orange as Doc Holloway's buggy creaked up beside him. The doc didn't bother getting down, just stared through opium-clouded eyes. 'Sheriff Grady wants to see you,' he drawled. 'Seems someone left your calling card in Marshal Teller's skull.' Cassidy's hand drifted to his revolver. That empty chamber suddenly felt heavier."
+        ],
+        [
+            "User",
+            ""
+        ],
+        [
+            "story",
+            "### CHAPTER I: THE WHISKEY TRAIL\n\nThe Silver Slipper saloon stank of sweat and gun oil. Cassidy pushed through the batwing doors, his duster stirring sawdust and last night's regrets. The bartender didn't look up\u2014just slid a bourbon toward him, the glass sticky with fingerprints. 'She ain't here,' the man muttered. Cassidy didn't need to ask who. Lila Rose's absence was louder than the out-of-tune piano. He flipped a silver dollar. 'When'd she vanish?' The coin never hit the counter. A gloved hand snatched it midair. 'Three nights back,' said a voice like gravel under wagon wheels. Cassidy turned to face Marshal Cole, the man's star shining too bright for such a dingy hole. 'Same night them Army rifles went missing from the fort.' Outside, a harmonica wailed a off-key rendition of 'Streets of Laredo.' Doc Holloway materialized from the shadows, his surgeon's fingers tracing the bullet holes in the wall. 'Four shots,' he murmured. 'All yours, Hart. Funny how your gun keeps turning up at crime scenes.' The saloon girl at the far table\u2014new, pretty, and clearly planted\u2014adjusted her garter with a telltale glint of steel. Cassidy's Schofield was out before her derringer cleared silk. 'Now why don't we all just\u2014' The piano stopped. Every eye turned to the doorway where Sheriff Grady stood, his spurs jingling like funeral bells. 'Hart. You're coming in.'"
+        ],
+        [
+            "story",
+            "### CHAPTER II: THE HANGING JUDGE\n\nThe jailhouse smelled of piss and old rope. Cassidy sat with his boots on the desk, watching a fly die slow in a spider's web above Grady's head. The sheriff tossed a leather pouch on the table\u2014inside, three .45 slugs, each with the same rifling marks. 'Ballistics match your piece,' Grady said, his mustache twitching. 'Marshal Teller. The stagecoach guard. That Mexican kid last Tuesday.' Cassidy spun one bullet between his fingers. 'Ain't my loads. I use lead from the Carson mine\u2014these are Virginia alloy.' Grady's smile didn't reach his eyes. 'Convenient.' The door burst open. A Comanchero reeking of mescal staggered in, clutching his gut. 'They're movin' the guns tonight!' he gasped. 'Through the\u2014' A throwing knife sprouted from his throat. Doc Holloway caught the dying man, his fingers probing the wound. 'Cheyenne steel,' he pronounced. 'Our killer's getting poetic.' Outside, church bells tolled midnight. The Comanchero's blood formed a perfect circle around Cassidy's boot. Grady's hand hovered near his Colt. 'You got till dawn to clear your name, Hart. After that...' He nodded to the noose hanging from the cottonwood. Doc waited until Grady left before opening the dead man's fist\u2014inside, a silver hairpin shaped like a rose. Lila's. Cassidy pocketed it as the wind carried the sound of wagon wheels toward Red Dust canyon."
+        ],
+        [
+            "story",
+            "### CHAPTER III: RED DUST GHOSTS\n\nThe canyon walls glowed like embers in the moonlight. Cassidy dismounted, his Schofield loose in its holster. The wagon tracks veered suddenly left\u2014toward the old mission ruins. Doc's buggy rattled up behind him, the surgeon's face slick with sweat. 'They're waiting for us,' he whispered. 'This reeks of\u2014' A rifle shot split the night. Cassidy's hat flew off. He returned fire blind, the report echoing off the cliffs. Silence. Then laughter\u2014high, wild, female. Lila Rose stepped from the shadows, a Winchester in her hands and a bruise flowering along her jaw. 'Took you long enough, cowboy.' The mission doors creaked open, revealing crates stamped 'U.S. ARMY.' But it was the man beside them that made Cassidy's finger tighten on the trigger\u2014Sheriff Grady, his star pinned over a Comanchero serape. 'Evening, Hart,' he drawled. 'Meet my business partners.' Six figures emerged from the ruins, their faces hidden by bandanas. Each carried a Schofield identical to Cassidy's. Lila spat blood in the dust. 'Told you he'd follow the bullets.' Grady's grin was wolfish. 'Now let's see how good you really are.' The canyon erupted in gunfire."
+        ],
+        [
+            "story",
+            "### CHAPTER IV: THE DEVIL'S DEAL\n\nCassidy woke to the taste of copper and the stink of burning hair. His wrists were lashed to a mission pew with barbed wire. Across the nave, Doc Holloway hummed 'Poor Wayfaring Stranger' through broken teeth. 'Ah,' the surgeon croaked. 'The dead rise.' Moonlight through the shattered roof illuminated Lila Rose cleaning Cassidy's own revolver. 'They're framing you for the Army thefts,' she said, not looking up. 'Grady's been selling guns to both sides since '78.' Cassidy tested his bonds. 'Why the show?' Lila's smile didn't reach her eyes. 'Because tonight, the famous Cassidy Hart joins the Comancheros. Or dies trying to escape.' The door groaned open. Grady entered, tossing a newspaper on the floor\u2014the headline screamed 'OUTLAW HUNTER TURNS KILLER.' Beneath it, a grainy photo of Cassidy's Schofield. 'Folks already believe it,' Grady said. 'Even that pretty sister of yours in Santa Fe.' Cassidy lunged, the barbed wire biting to bone. Doc chuckled wetly. 'Oh, this is rich. The lawman, the whore, and the surgeon\u2014all Judas goats.' Grady drew his Colt. 'Last chance, Hart. Ride with us, or hang tomorrow.' Outside, coyotes yipped like laughing children. Somewhere in the dark, a Winchester's lever clicked."
+        ],
+        [
+            "story",
+            "### CHAPTER V: THE SANTA FE TRAIN\n\nThe mission burned behind them as Cassidy spurred his mare north. Doc clung to the saddlebags, his stitches popping. 'She's still back there!' he wheezed. Cassidy didn't answer. Lila's last words echoed louder than the gunshots\u2014'The train. Midnight. Your sister.' The Santa Fe Express loomed ahead, its lanterns cutting through the alkali dust. Too many shadows moved along the boxcars. Cassidy dismounted, pressing the cool barrel of his stolen Winchester to his forehead. Think. Grady's men would be watching the passenger cars. The freight hold would be\u2014 A harmonica's mournful wail drifted from the caboose. Familiar. The same off-key 'Streets of Laredo' from the Silver Slipper. Cassidy's boots found purchase on the coupling iron. Inside, Marshal Cole sat polishing a knife, his star conspicuously absent. 'Figured you'd come,' he said. The boxcar was packed with Army crates. And kneeling beside them, her wrists raw from rope burns\u2014Cassidy's sister Abigail, her Sunday dress torn at the shoulder. Cole's blade traced her collarbone. 'Grady wants you to see this.' He pried open a crate. Not rifles. Dynamite. Enough to turn the Santa Fe depot into kindling. Abigail's eyes met Cassidy's. No fear. Just calculation. Then the train whistle screamed, and the world exploded in fire."
+        ],
+        [
+            "story",
+            "### CHAPTER VI: THE BLEEDING HOUR\n\nCassidy came to in a world of smoke and screaming. The boxcar roof had peeled back like a tin can, revealing a sky the color of fresh liver. Abigail was gone. So was Cole. Doc Holloway crouched amidst the wreckage, his fingers deep in some poor bastard's abdomen. 'Abigail?' Cassidy croaked. Doc shook his head. 'Took off with the marshal. She was\u2014' A gunshot cut him off. The dynamite crates were untouched. A diversion. Cassidy staggered toward the engine, his Schofield miraculously still in its holster. The harmonica lay crushed on the tracks. Then he saw it\u2014a single pearl button from Abigail's dress. And beyond it, the depot. Quiet. Too quiet. The ticket booth was empty, the telegraph wire cut. Cassidy's reflection in the window showed a stranger\u2014face blackened with soot, eyes older than the desert. Doc's hand gripped his shoulder. 'They're making their move. Grady's got the whole town gathered at\u2014' The church bells began to toll. Not the steady rhythm of Sunday service. The frenzied clang of a death knell. From the alley, Lila Rose emerged, her dress stiff with blood. 'I tried to stop them,' she whispered. 'They're going to hang your sister for your crimes.' The noon sun cast no shadows as Cassidy checked his revolver. Five bullets. One empty chamber. Just like always."
+        ],
+        [
+            "story",
+            "### CHAPTER VII: THE EMPTY CHAMBER\n\nThe gallows stood in the town square, fresh-built and stinking of pine pitch. Abigail knelt on the platform, her face a mask of calm. Grady's voice boomed across the crowd\u2014'...acts of treason and murder!' Cassidy pushed through the throng, his fingers brushing the Schofield's grip. Then he froze. The noose around Abigail's neck wasn't hemp. It was Lila Rose's hair\u2014braided into a hangman's knot. Doc Holloway materialized beside him, reeking of chloroform. 'It's a trap,' he hissed. 'Grady knows you're\u2014' A rifle cocked behind them. Marshal Cole's breath was hot on Cassidy's neck. 'Move slow, Hart.' The crowd parted like rotten cloth. There stood Grady, his sheriff's star now pinned to a Comanchero's vest. And beside him\u2014Lila Rose, very much alive, her Winchester trained on Cassidy's heart. 'Told you he'd come,' she purred. Abigail's eyes locked onto Cassidy's. Her lips formed two words: 'The gun.' Grady raised the execution order. 'Any last words for the condemned?' The church bell struck one. Cassidy's hand hovered over his revolver. That empty chamber stared back like a dead man's eye. Somewhere, a harmonica began to play."
+        ],
+        [
+            "story",
+            "### CHAPTER VIII: THE LAST ROUND\n\nThe crowd's roar faded to a buzz in Cassidy's ears. Lila's rifle didn't waver. Grady's grin stretched wide as a grave. 'Time to choose, Hart.' Abigail's fingers twitched toward her boot\u2014where Cassidy's throwing knife should've been. Doc Holloway coughed blood onto his sleeve. 'Fascinating,' he murmured. 'They're all here.' Indeed, the faces in the crowd weren't townsfolk. Comancheros. Army deserters. The men from the mission. Each held a Schofield identical to Cassidy's. A stagecoach wheel creaked in the wind. Grady raised the execution order higher. 'Hang her!' The trapdoor groaned. Abigail's body dropped\u2014then jerked to a stop as Cassidy's knife severed the rope. He hadn't thrown it. Doc Holloway stood with surgeon's precision, his scalpel glinting. Chaos erupted. Gunfire. Screams. The gallows collapsed in a cloud of splinters. Cassidy dove, his Schofield barking three times. Lila's Winchester answered. Then\u2014silence. The dust settled to reveal Grady clutching his gut, Abigail free with a dead man's revolver, and Lila Rose... gone. Only her derringer remained, its single spent shell spinning in the dirt. Doc wiped his scalpel clean. 'The dynamite,' he said. 'It was never on the train.' Abigail's smile was colder than the grave. 'No,' she agreed. 'It's under the church.' The first explosion shattered the courthouse windows. The second would come any second. Somewhere in the smoke, a harmonica played on."
+        ],
+        [
+            "User",
+            "continue"
+        ],
+        [
+            "story",
+            "Doc Holloway's eyes narrowed as he watched the smoke billow from the church, his morphine-laced mind calculating the blast radius. 'Twenty seconds,' he murmured, his voice barely audible over the screaming chaos of the town square. He grabbed Abigail's arm, pulling her away from the gallows' wreckage. 'Fifteen.' Cassidy was already moving, his Schofield scanning the crowd for Lila Rose. The harmonica melody floated above the pandemonium, the same off-key tune haunting him since the Silver Slipper. Doc's grip tightened on Abigail. 'Ten.' The first dynamite blast had only been a warning shot. The next would turn Main Street into a graveyard. Around them, Grady's men scattered like rats from a sinking ship. 'Five,' Doc breathed, his voice steady despite the madness. Abigail, her eyes locked onto the church, didn't flinch. The harmonica reached a crescendo. Then, silence. The world held its breath. Four heartbeats passed. Then, with a roar, the church exploded."
+        ]
+    ],
+    "story": {
+        "title": "blood_on_the_santa_fe",
+        "genre": "noir western",
+        "storyline": "A disgraced bounty hunter must clear his name while unraveling a conspiracy involving stolen Army guns, a missing saloon girl, and his own sister's impending execution",
+        "goal": "Uncover Sheriff Grady's plot, rescue Abigail, and survive the bloodshed"
+    },
+    "target": "story"
+}
