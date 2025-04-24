@@ -11,7 +11,7 @@ import MemoryAgent
 
 # from chromadb import Collection
 from tkinter import messagebox
-from NPC import create_char, get_initial_prompt, get_dev_message, get_response
+from NPC import get_initial_prompt, get_dev_message, get_response
 from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation, check_goal
 # from sentence_transformers import SentenceTransformer
 
@@ -139,6 +139,22 @@ class AppEngine(tk.Tk):
         self.AddNewStoryPassage(beginning_line)
         #Add initial story passage. 
 
+    def getLastPassageData(self):
+        timeStamp = self.story_memory.utility_generateDatetimeStr()
+        latest_text = self.story_memory.get_recent_passages(timeStamp)
+        associated_npcs = self.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
+
+        return latest_text, associated_npcs
+        
+    def updateMetadata(self, response, user_text):
+        """
+            This function is called from the on_submit event handler within the
+            GameInterface class.
+        """
+        self.AddNewStoryPassage(response, user_text)
+        self.AddNPCs()
+        self.AddNPCInteractions()
+
     def AddNewStoryPassage(self, response, user_text=""):
         self.json_story_summary = self.story_memory.extract_story_segment(response)
 
@@ -175,10 +191,13 @@ class AppEngine(tk.Tk):
         
         #Add initial npcs. 
         #TODO: Consider storing in separate function
-        self.npc_memory.add_npcs(self.DATA)
+        # self.npc_memory.add_npcs(self.DATA)
 
     def AddNPCs(self):
         self.npc_memory.add_npcs(self.DATA)
+
+    def AddNPCInteractions(self):
+        self.npc_memory.add_npc_interaction(self.json_story_summary, self.timestamp_lastPassage)
 
     def displayPageGameInterface(self):
         self.initializeStoryMemory(self.beginning_line)
@@ -436,22 +455,17 @@ class PageGameInterface(tk.Frame):
         response = None
 
         if input_type == "story":
-            timeStamp = self.controller.story_memory.utility_generateDatetimeStr()
-            latest_text = self.controller.story_memory.get_recent_passages(timeStamp)                    
-            associated_npcs = self.controller.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
+            latest_text, associated_npcs = self.controller.getLastPassageData()
 
             response = story_generation(CLIENT, MODEL_NAME, self.controller.DATA, user_text, associated_npcs)
 
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
 
-            self.controller.AddNewStoryPassage(response, user_text)
-    
+            self.controller.updateMetadata(response, user_text)
 
         elif input_type in self.controller.DATA["chars"].keys():
-            timeStamp = self.controller.story_memory.utility_generateDatetimeStr()
-            latest_text = self.controller.story_memory.get_recent_passages(timeStamp)
-            associated_npcs = self.controller.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
+            latest_text, associated_npcs = self.controller.getLastPassageData()
 
             dv = get_dev_message(get_initial_prompt(self.controller.DATA, input_type), self.controller.DATA["history"])
             response = get_response(CLIENT, dv, user_text).choices[0].message.content
@@ -459,14 +473,14 @@ class PageGameInterface(tk.Frame):
             self.controller.DATA["history"].append(["User", user_text])
             self.controller.DATA["history"].append([input_type, response])
 
-            self.controller.AddNewStoryPassage(response, user_text)
+            self.controller.updateMetadata(response, user_text)
 
         else:
             messagebox.showerror("An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
 
         if response is not None:
             self.text.config(state="normal")
-            self.text.insert("end", f"You: {user_text}\n")
+            self.text.insert("end", f"\nYou: {user_text}\n")
             self.text.insert("end", f"{response}\n")
             self.text.tag_configure("user_text", foreground="grey")
             self.text.config(state="disabled") 

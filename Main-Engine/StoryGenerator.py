@@ -186,7 +186,9 @@ def story_generation(client, model_name, data, user_text, npc_data):
     6. NOT generate dialogue for the main Character. That will be left up to the user.
     7. Strictly avoid phrases like "could be continued" or "next chapter"
     8. Never include out-of-story text in parentheses/brackets
-    
+    9. Includes at least one spoken line from an NPC present.
+
+
     Here is the story so far:
     {get_last_story_segment(data)}
     
@@ -242,6 +244,7 @@ def get_initial_gen(client, model_name, prompt):
             - Builds tension but doesn't resolve completely
             - Ends with an open-ended situation that provides the user various options for their next action
             - Maintains genre conventions
+            - Includes at least one spoken line from an NPC present.
             - Uses characters' backstories appropriately
             - NO suggestions, notes, or commentary
             - DO NOT generate dialogue for the main Character. That will be left up to the user.

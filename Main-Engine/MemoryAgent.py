@@ -202,6 +202,7 @@ class StoryAgent(MemoryAgent):
             "The 'actions' field cannot be blank.",
             "The player (including 'You') cannot be a 'chars' entry.",
             "The player (including 'You') cannot be in the 'chars_present' entry."
+            "The dialog attribute, target_character can mention 'player' for dialog directed at the player."
         ]
 
         #Sample input prompt to facilitate few-shot learning.
@@ -510,7 +511,6 @@ class NPCAgent(MemoryAgent):
             setattr(self, attr, self.get_collection(col_name))
 
     def add_npcs(self, npc_entries):
-
         if self.lastStoryTimePassage is None:
             self.lastStoryTimePassage = self.utility_generateDatetimeStr()
 
@@ -552,18 +552,36 @@ class NPCAgent(MemoryAgent):
                 print(f"Added NPC_entry {key}: background: {value['background']}, traits: {value['act']}, "
                       f"timeStamp_lastSeen: {self.lastStoryTimePassage}")
 
-    def add_npc_interaction(self, npc_convo_entries, storyPassageId):
+    def add_npc_interaction(self, json_story_summary, storyPassageId):
         """Add NPC conversations extracted from the story passage denoted by the storyPassageId"""
-        for entry in npc_convo_entries['chars']:
-            self.npc_interactions.add(
-                ids=[entry['id']],
-                documents=entry['dialog'],
-                metadatas=[{
-                    "storyPassageId" : str(storyPassageId),
-                    "dialog" : [1, 2]
-                    #Add additional tags as needed.
-                }]
-            )
+        for entry in json_story_summary['chars']:
+            if len(entry['dialog']) > 0:
+                char_name = entry['id']
+
+                for index, line in enumerate(entry['dialog']):
+                    iCurNum = index + 1
+
+                    embedding_text = (
+                        f"name: {char_name}\n" 
+                        f"storyPassageId: {storyPassageId}\n" 
+                        f"dialog: {line['spoken_line']}\n"
+                        f"target_character: {line['target_character']}"                        
+                    )
+
+                    self.npc_interactions.add(
+                        ids=[f"{char_name}_{storyPassageId}_{iCurNum:02}"],
+                        documents=embedding_text,                        
+                        metadatas=[{
+                            "storyPassageId" : str(storyPassageId),
+                            "dialog" : line['spoken_line'],
+                            "target_character": line['target_character']
+                            #Add additional tags as needed.
+                        }]
+                    )
+
+                    if B_DEBUG_MODE:
+                        print(f"Added npc_interaction: char: {char_name}, line: {line['spoken_line']}, "
+                              f"target_character: {line['target_character']}")
 
     def get_NPCs(self, **kwargs):
         result = self.npcs.get(**kwargs)
