@@ -1,10 +1,7 @@
-from openai import OpenAI, api_key
+from openai import OpenAI
 import anthropic
 import mistralai
 import json
-import os
-import time
-import re
 import tkinter as tk
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
@@ -262,7 +259,7 @@ def run_generation(beginning_line):
                 response = get_response_content(story_generation(client, MODEL_NAME, DATA, user_text))
                 DATA["history"].append(["User", user_text])
                 DATA["history"].append([input_type, response])
-                DATA = parse_new_characters(response, DATA, MODEL_NAME)
+                DATA = parse_new_characters(response,client, DATA, MODEL_NAME)
             elif input_type in DATA["chars"].keys():
                 dv = get_dev_message(get_initial_prompt(
                     DATA, input_type), DATA["history"])

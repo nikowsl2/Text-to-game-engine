@@ -1,68 +1,6 @@
 from openai import OpenAI
 import mistralai
 import json
-import os
-import time
-import re
-import tkinter as tk
-from tkinter import messagebox
-
-
-client = OpenAI(
-    api_key="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",
-    base_url="https://api.groq.com/openai/v1"
-)
-
-
-def save_to_history(story_text, user_input, uer_input_analysis=""):
-    """Save FULL generated story to history file"""
-    entry = {
-        "time": time.time(),
-        "user_input": user_input,
-        "story_segment": story_text,
-        "uer_input_analysis": uer_input_analysis
-    }
-
-    if not os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, 'w') as f:
-            json.dump([], f)
-
-    try:
-
-        with open(HISTORY_FILE, 'r') as f:
-            history = json.load(f)
-
-        history.append(entry)
-
-        with open(HISTORY_FILE, 'w') as f:
-            json.dump(history, f, indent=2)
-
-    except Exception as e:
-        print(f"Warning: Could not save history - {str(e)}")
-
-
-def load_characters():
-    """Load and validate character JSON file"""
-    filename = PROTAGONISTS_FILE
-
-    try:
-        with open(filename, 'r') as f:
-            characters = json.load(f)
-
-        required_fields = ['name', 'role', 'characteristics', 'backstory']
-        for idx, char in enumerate(characters):
-            for field in required_fields:
-                if field not in char:
-                    raise ValueError(
-                        f"Character {idx+1} missing '{field}' field")
-            if not isinstance(char['name'], str):
-                raise ValueError("Character names must be strings")
-
-        return characters
-
-    except Exception as e:
-        print(f"Error loading characters: {str(e)}")
-        exit(1)
 
 
 def format_characters(data):
@@ -84,32 +22,7 @@ def get_last_story_segment(data):
         f"""{i[0]}: {i[1]}"""
         for i in data["history"]
     )
-    """try:
-        with open(HISTORY_FILE, 'r') as f:
-            history = json.load(f)
-            if not history:
-                return None
-            return history[-1]['story_segment']
-    except Exception as e:
-        print(f"Error loading history: {str(e)}")
-        return None"""
 
-
-def get_goal():
-    try:
-        with open(HISTORY_FILE, 'r') as f:
-            history = json.load(f)
-            if not history:
-                return None
-            user_input = history[0].get("user_input", "")
-            for part in user_input.split(", "):
-                if part.startswith("Goal:"):
-                    goal = part.split("Goal:")[1].strip()
-                    break
-            return goal
-    except Exception as e:
-        print(f"Error loading goal from history: {str(e)}")
-        return None
 
 
 def update_chars(new_characters, data):
@@ -139,7 +52,7 @@ def update_chars(new_characters, data):
     return data
 
 
-def parse_new_characters(story_text, data, MODEL_NAME):
+def parse_new_characters(story_text, client, data, model_name):
     """Extract new characters from story text using LLM and update the data structure"""
 
     prompt = f"""Analyze this story segment and extract any NEW important characters:
@@ -174,7 +87,7 @@ def parse_new_characters(story_text, data, MODEL_NAME):
 
     try:
         response = client.chat.completions.create(
-            model=MODEL_NAME,
+            model=model_name,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.3,
             response_format={"type": "json_object"}
