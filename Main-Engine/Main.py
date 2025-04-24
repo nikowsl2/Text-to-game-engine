@@ -6,7 +6,7 @@ import re
 import tkinter as tk
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
-from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation,  check_goal
+from StoryGenerator import get_starting_prompt, format_characters, get_last_story_segment, story_generation, parse_new_characters, check_goal
 
 
 HISTORY_FILE = "history.json"
@@ -20,13 +20,6 @@ client = OpenAI(
     api_key="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",
     base_url="https://api.groq.com/openai/v1"
 )
-
-
-def get_client():
-    return OpenAI(
-        api_key="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",
-        base_url="https://api.groq.com/openai/v1"
-    )
 
 
 def classifier(client, user_input):
@@ -120,6 +113,7 @@ def run_generation(beginning_line):
 
     # Function to handle button click
     def on_submit():
+        global DATA
         user_text = textbox.get()
         input_type = classifier(client, user_text).choices[0].message.content
         print(input_type)
@@ -128,6 +122,7 @@ def run_generation(beginning_line):
             response = story_generation(client, MODEL_NAME, DATA, user_text)
             DATA["history"].append(["User", user_text])
             DATA["history"].append([input_type, response])
+            DATA = parse_new_characters(response, DATA, MODEL_NAME)
         elif input_type in DATA["chars"].keys():
             dv = get_dev_message(get_initial_prompt(
                 DATA, input_type), DATA["history"])
@@ -169,43 +164,6 @@ def run_generation(beginning_line):
         text.see(tk.END)
         textbox.delete(0, tk.END)
 
-        # Analyze the player's action in relation to the goal.
-        status, reason, ending_line = check_goal(client, MODEL_NAME, DATA)
-        if status == "progress":
-            print(f"✅ Progress: {reason}")
-            return
-
-        if status == "game_over":
-            ending_line = "Game Over: " + ending_line
-            print(f"❌ Game Over: {reason}")
-        elif status == "win":
-            ending_line = "You Win: " + ending_line
-            print(f"🎉 You Win! {reason}")
-
-        text.config(state="normal")
-        text.insert("end", f"\n{ending_line}\n")
-        text.config(state="disabled")
-        text.see(tk.END)
-        textbox.delete(0, tk.END)
-
-        # Analyze the player's action in relation to the goal.
-        status, reason, ending_line = check_goal(client, MODEL_NAME, DATA)
-        if status == "progress":
-            print(f"✅ Progress: {reason}")
-            return
-
-        if status == "game_over":
-            ending_line = "Game Over: " + ending_line
-            print(f"❌ Game Over: {reason}")
-        elif status == "win":
-            ending_line = "You Win: " + ending_line
-            print(f"🎉 You Win! {reason}")
-
-        text.config(state="normal")
-        text.insert("end", f"\n{ending_line}\n")
-        text.config(state="disabled")
-        text.see(tk.END)
-        textbox.delete(0, tk.END)
     # Submit button
     submit_button = tk.Button(root, text="Generate", command=on_submit)
     submit_button.pack(pady=10)
@@ -259,6 +217,7 @@ def run_mode1():
     goal_box.pack(pady=10)
 
     def on_submit():
+        global DATA
         title = title_box.get()
         genre = genre_box.get()
         num_char = num_char_box.get()
@@ -309,11 +268,11 @@ def run_mode2():
     title_box.pack(pady=10)
 
     def on_submit():
+        global DATA
         title = title_box.get()
         try:
             filename = title.replace(" ", "_") + ".json"
             with open(filename, 'r') as file:
-                global DATA
                 DATA = json.load(file)
             root.destroy()
         except Exception as e:
@@ -358,18 +317,6 @@ def main():
     new_button.pack(pady=10)
 
     root.mainloop()
-
-    """mode = input("\nSelect (1/2): ").strip()
-
-    if mode == "1":
-        if os.path.exists(HISTORY_FILE):
-            os.remove(HISTORY_FILE)
-        run_mode1()
-    elif mode == "2":
-        if not os.path.exists(HISTORY_FILE) or not os.path.exists(PROTAGONISTS_FILE):
-            print("Required files missing! Start with Mode 1 first.")
-            return
-        run_mode2() """
 
 
 if __name__ == "__main__":
