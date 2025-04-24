@@ -113,15 +113,35 @@ def get_dev_message(initial, hist):
 
     return message
 
-def get_response(client, message, input):
-    return client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=[
-            {"role": "system", "content": message},
-            {"role": "user", "content": input},
-        ],
-        stream=False
-    )
+def get_response(client, model_name, message, input):
+    if model_name == "claude-3-opus-20240229":
+        return client.messages.create(
+            model=model_name,
+            temperature=0.6,
+            max_tokens=1000,
+            system=message,
+            messages=[
+                {"role": "user", "content": input}
+            ]
+        )
+    elif model_name == "mistral-large-latest":
+        return client.chat.complete(
+            model=model_name,  # or "mistral-small"
+            messages=[
+                {"role": "system",
+                 "content": message},
+                {"role": "user", "content": input}
+            ]
+        )
+    else:
+        return client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": message},
+                {"role": "user", "content": input},
+            ],
+            stream=False
+        )
 
 def run_convo(char_prompt):
     prompt = get_initial_prompt(char_prompt)
@@ -188,4 +208,4 @@ def run_convo(char_prompt):
 
 
 if __name__ == "__main__":
-    create_char()
+    create_char(1)

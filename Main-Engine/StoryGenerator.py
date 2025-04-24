@@ -1,4 +1,5 @@
 from openai import OpenAI
+import mistralai
 import json
 import os
 import time
@@ -157,14 +158,6 @@ def parse_new_characters(story_text):
 
 
 def story_generation(client, model_name, data, user_text):
-
-    # Get story elements
-    # genre = input("Enter genre: ").strip()
-    # storyline = input("Enter story setup: ").strip()
-    # goal = input("Enter story goal (what the protagonist must achieve): ").strip()
-
-    # Load characters from JSON
-    # characters = load_characters()
     char_summary = format_characters(data)
 
     system_prompt = f"""You are a creative writing professional specializing in {data["story"]["genre"]} stories. \
@@ -203,18 +196,38 @@ def story_generation(client, model_name, data, user_text):
     """
 
     try:
-        response = client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system",
-                 "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.95,
-            max_tokens=1200
-        )
+        if model_name == "claude-3-opus-20240229":
+            response = client.messages.create(
+                model=model_name,
+                temperature=0.6,
+                max_tokens=1000,
+                system=system_prompt,
+                messages=[
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+        elif model_name == "mistral-large-latest":
+            response = client.chat.complete(
+                model=model_name,  # or "mistral-small"
+                messages=[
+                    {"role": "system",
+                     "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
+            )
+        else:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system",
+                     "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.6,
+                max_tokens=1200
+            )
 
-        return response.choices[0].message.content
+        return response
 
     except Exception as e:
         print(f"\nError: {str(e)}")
@@ -233,29 +246,82 @@ def get_starting_prompt(data):
 
 
 def get_initial_gen(client, model_name, prompt):
-    return client.chat.completions.create(
-        model=model_name,
-        messages=[
-            {"role": "system", "content": """You are a expert serial fiction writer helping the user write the start of \
-            a first person story that the user can then continue. The user will provide a genre, \
-            a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
-            information provided by the user to write the BEGINNING of a story with the following requirements.
-            
-            Requirements:
-            - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
-            - Builds tension but doesn't resolve completely
-            - Ends with an open-ended situation that provides the user various options for their next action
-            - Maintains genre conventions
-            - Uses characters' backstories appropriately
-            - NO suggestions, notes, or commentary
-            - DO NOT generate dialogue for the main Character. That will be left up to the user.
-            - Strictly avoid phrases like "could be continued" or "next chapter"
-            - Never include out-of-story text in parentheses/brackets
-            - Maintain immersive storytelling only"""},
-            {"role": "user", "content": prompt},
-        ],
-        stream=False
-    )
+    if model_name == "claude-3-opus-20240229":
+        print("claude")
+        return client.messages.create(
+                model=model_name,
+                temperature=0.6,
+                max_tokens=1000,
+                system="""You are a expert serial fiction writer helping the user write the start of \
+                a first person story that the user can then continue. The user will provide a genre, \
+                a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
+                information provided by the user to write the BEGINNING of a story with the following requirements.
+                
+                Requirements:
+                - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
+                - Builds tension but doesn't resolve completely
+                - Ends with an open-ended situation that provides the user various options for their next action
+                - Maintains genre conventions
+                - Uses characters' backstories appropriately
+                - NO suggestions, notes, or commentary
+                - DO NOT generate dialogue for the main Character. That will be left up to the user.
+                - Strictly avoid phrases like "could be continued" or "next chapter"
+                - Never include out-of-story text in parentheses/brackets
+                - Maintain immersive storytelling only""",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
+            )
+    elif model_name == "mistral-large-latest":
+        print("mistral")
+        return client.chat.complete(
+            model=model_name,
+            messages=[
+                {"role": "system",
+                 "content": """You are a expert serial fiction writer helping the user write the start of \
+                a first person story that the user can then continue. The user will provide a genre, \
+                a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
+                information provided by the user to write the BEGINNING of a story with the following requirements.
+                
+                Requirements:
+                - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
+                - Builds tension but doesn't resolve completely
+                - Ends with an open-ended situation that provides the user various options for their next action
+                - Maintains genre conventions
+                - Uses characters' backstories appropriately
+                - NO suggestions, notes, or commentary
+                - DO NOT generate dialogue for the main Character. That will be left up to the user.
+                - Strictly avoid phrases like "could be continued" or "next chapter"
+                - Never include out-of-story text in parentheses/brackets
+                - Maintain immersive storytelling only"""},
+                {"role": "user", "content": prompt}
+            ]
+)
+    else:
+        print("not claude or mistral")
+        return client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": """You are a expert serial fiction writer helping the user write the start of \
+                a first person story that the user can then continue. The user will provide a genre, \
+                a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
+                information provided by the user to write the BEGINNING of a story with the following requirements.
+                
+                Requirements:
+                - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
+                - Builds tension but doesn't resolve completely
+                - Ends with an open-ended situation that provides the user various options for their next action
+                - Maintains genre conventions
+                - Uses characters' backstories appropriately
+                - NO suggestions, notes, or commentary
+                - DO NOT generate dialogue for the main Character. That will be left up to the user.
+                - Strictly avoid phrases like "could be continued" or "next chapter"
+                - Never include out-of-story text in parentheses/brackets
+                - Maintain immersive storytelling only"""},
+                {"role": "user", "content": prompt},
+            ],
+            stream=False
+        )
 
 
 def check_goal(client, model_name, data):
@@ -302,14 +368,43 @@ Respond in JSON format:
     "ending_line": A dramatic narrative sentence for win or game_over status, otherwise leave empty.
 }}"""
 
-    response = client.chat.completions.create(
-        model=model_name,
-        messages=[{"role": "user", "content": system_prompt}],
-        temperature=0.3,
-        response_format={"type": "json_object"}
-    )
-
-    result = json.loads(response.choices[0].message.content)
+    if model_name == "claude-3-opus-20240229":
+        response = client.messages.create(
+            model=model_name,
+            temperature=0.6,
+            max_tokens=1000,
+            system="""You are an evaluation metric whose job is to analyze the actions of the main character in 
+            the provided story to determine whether or not they have achieved their goal. 
+            Always respond with a valid JSON object. Do NOT respond with anything that is not a JSON object""",
+            messages=[
+                {"role": "user", "content": system_prompt}
+            ]
+        )
+    elif model_name == "mistral-large-latest":
+        response = client.chat.complete(
+            model=model_name,  # or "mistral-small"
+            messages=[
+                {"role": "system",
+                 "content": """You are an evaluation metric whose job is to analyze the actions of the main character 
+                 in the provided story to determine whether or not they have achieved their goal"""},
+                {"role": "user", "content": system_prompt}
+            ],
+            response_format={"type": "json_object"}
+        )
+    else:
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[{"role":"system", "content": """You are an evaluation metric whose job is to analyze the actions of the main character 
+                 in the provided story to determine whether or not they have achieved their goal"""},
+                      {"role": "user", "content": system_prompt}],
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
+    if model_name == "claude-3-opus-20240229":
+        response = response.content[0].text
+    else:
+        response = response.choices[0].message.content
+    result = json.loads(response)
     status = result.get("status", "progress")
     reason = result.get("reason", "")
     ending_line = result.get("ending_line", "")
