@@ -1,0 +1,50 @@
+Title: ParameterEval1-Claude
+Genre: Science Fiction
+NPCs: 0
+Storyline: The year is 2150, due to a rapid an cataclysmic deterioration of the Earth's environment, humanity has migrated to living across various space stations scattered in orbit around Earth, with no one left on the surface. The surface landscape of the Earth is ruined, unable to sustain life, and completely inhabitable for humans. This story is set in the a future version of the modern world, so there is no magic or fantasy elements at all. The main character is a normal human named Cam with no special powers or abilities beyond that of a regular human being. They are living on station Aio, one of the space stations in orbit around Earth that support the last vestiges of humanity, but suddenly their space station lose contact with all of the other space stations housing the rest of humanity. The space station has no fuel and is only propelled by the forces in play that cause it to remain in orbit, so they are powerless to investigate the issue at the moment. However, our main character is worried about their friend on another station named Taiten and is determined to find out if they are ok.
+Character Goal: The character's goal is to discover the cause behind the issue that is plaguing the other space stations.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Initial Generation: The cold, sterile air of the space station Aio filled my lungs as I stared out the viewport at the ruined Earth below. It was hard to believe that just a century ago, our planet had been teeming with life, but now it was nothing more than a barren wasteland. The rapid deterioration of the environment had forced humanity to flee to the stars, seeking refuge in a network of orbiting space stations.
+
+I turned away from the viewport, my mind racing with worry. It had been hours since we lost contact with the other stations, and the silence was deafening. As I made my way through the dimly lit corridors of Aio, I couldn't shake the feeling that something was terribly wrong. My thoughts drifted to my friend Taiten, who was stationed on another vessel. Were they safe? What could have caused this sudden loss of communication? With no fuel to propel our station, we were powerless to investigate the issue. But I knew one thing for certain: I had to find out what happened to Taiten and the rest of humanity, no matter the cost.
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Continue normally - Input: I make my way to the hanger to look for a spacecraft.
+Response: As you enter the hangar, the vast space stretches out before you, filled with an array of spacecraft in various states of disrepair. The once-bustling area now feels eerily quiet, with only the hum of the station's life support systems breaking the silence.
+
+Your eyes scan the rows of ships, searching for one that might be operational. Many of the crafts appear to have been cannibalized for parts, their skeletal remains a testament to the desperate times humanity has faced.
+
+Suddenly, a flicker of movement catches your attention. You spot Zara, the station's chief mechanic, hunched over a small, sleek ship in the far corner of the hangar. Her brow is furrowed in concentration as she works on the vessel's exposed circuitry.
+
+As you approach, Zara looks up, her eyes widening in surprise. "What are you doing here?" she asks, her voice tinged with a mix of curiosity and concern.
+
+You explain your desire to find a spacecraft capable of investigating the other stations and locating your friend Taiten. Zara's expression grows somber as she listens to your plan.
+
+"I've been working on this ship for weeks," she confides, gesturing to the vessel before her. "It's the only one that might be able to make the journey, but it's risky. The fuel cells are nearly depleted, and I haven't had a chance to fully test the life support systems."
+
+She pauses, weighing the gravity of the situation. "But if you're determined to go, I'll do my best to get it ready. Just know that there's no guarantee of success, and you might not be able to return to Aio."
+
+The weight of Zara's words hangs in the air as you contemplate the risks and the desperate need to uncover the truth behind the stations' silence.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Continue against specified parameters - Input: I board a plane to France.
+Response: I apologize for the confusion, but there seems to be an inconsistency between the provided story and the main character's most recent action. The story is set in a futuristic scenario where humanity has fled to space stations orbiting Earth due to the planet's environmental deterioration. In this context, boarding a plane to France would not be possible or relevant to the established narrative.
+
+If you'd like me to continue the story, please provide a main character action that aligns with the setting and plot you've described. This will allow me to generate a meaningful and coherent response that maintains the story's continuity.
+
+Game Over: As I foolishly attempted to board a nonexistent plane to a ruined Earth, the cold reality of our dire situation crashed down upon me. Humanity's fate hung in the balance, and my irrational actions had sealed our doom.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Continue nonsensically - Input: I pull out my wand and shout "Avada Kedavra!"
+Response: I apologize for the confusion, but it seems like there may be a misunderstanding or inconsistency in the provided information. The story you've shared appears to be set in a science fiction universe where humanity has fled a dying Earth to live on orbiting space stations. However, the most recent action by the main character involves using a magic spell from the Harry Potter series, which doesn't fit the established genre or setting.
+
+In order to provide a meaningful continuation of the story, it would be helpful to have a character action that aligns with the science fiction narrative you've presented. If you'd like to provide an updated action that fits within the context of the story, I'd be happy to generate a continuation for you.
+
+Game Over: As I shouted the nonsensical words and waved an imaginary wand, I realized that my mind had finally cracked under the stress and isolation, dooming any hope of finding answers or saving humanity.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Solve the goal instantly - Input: I discover that all of the other stations were attacked by aliens. Together with a group of friends from station Aio, we defeat the aliens in an epic space battle and rescue humanity.
+Response: I apologize for the confusion, but there seems to be an inconsistency in the provided information. The story mentions that the main character is worried about the sudden loss of communication with the other stations and their friend Taiten, and that they are unable to investigate due to a lack of fuel. However, the most recent action states that the main character and their friends have already discovered the alien attack, defeated the aliens, and rescued humanity.
+
+Given the context of the story, it would be more appropriate for the continuation to focus on the main character's efforts to investigate the loss of communication and uncover the truth behind the situation. The epic space battle and the rescue of humanity would likely occur later in the story, after the main character has gathered more information and resources.
+
+If you would like me to continue the story based on the provided context, please let me know, and I will be happy to generate a response that maintains continuity with the established narrative.
+
+You Win: As the final alien ship exploded in a brilliant flash of light, I breathed a sigh of relief, knowing that humanity was safe once more, and that Taiten and I would be reunited at last.

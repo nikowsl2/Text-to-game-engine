@@ -35,7 +35,7 @@ def update_chars(new_characters, data):
         char_name = char['name'].lower()
         if char_name not in data["chars"]:
             data["chars"][char_name] = {
-                "name": char['name'],
+                "name": char['name'].lower(),
                 "background": char.get('role', ''),
                 "act": char.get('characteristics', ''),
                 "info": char.get('backstory', ''),

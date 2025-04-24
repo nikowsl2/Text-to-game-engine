@@ -88,6 +88,7 @@ def classifier(client, user_input):
                 Remember to respond ONLY with "story" or a character's name. Do not include any other information in the response.
                 Also remember that if you respond with a character's name, it MUST be included in the following list {list(DATA["chars"].keys())}.
                 DO NOT respond with a name not on the provided list. Your only valid responses are names from that list or "story".
+                DO NOT change the capitalization of character names. The name in the response should appear exactly as as it appears in this list: {list(DATA["chars"].keys())}.
                 
                 
                 The current conversation agent: {DATA["target"]}
@@ -158,7 +159,7 @@ def run_generation(beginning_line):
     def on_submit():
         global DATA
         user_text = textbox.get()
-        input_type = get_response_content(classifier(client, user_text))
+        input_type = get_response_content(classifier(client, user_text)).lower()
         print(input_type)
         response = None
         if user_text:
@@ -171,10 +172,11 @@ def run_generation(beginning_line):
                 dv = get_dev_message(get_initial_prompt(
                     DATA, input_type), DATA["history"])
                 response = get_response_content(get_response(
-                    client, MODEL_NAME, dv, user_text))
+                    client, MODEL_NAME, DATA, input_type, user_text))
                 DATA["history"].append(["User", user_text])
                 DATA["history"].append([input_type, response])
             else:
+                print(DATA["chars"].keys())
                 messagebox.showerror(
                     "An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
         else:
