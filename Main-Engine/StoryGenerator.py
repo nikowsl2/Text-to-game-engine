@@ -8,6 +8,12 @@ import tkinter as tk
 from tkinter import messagebox
 
 
+client = OpenAI(
+    api_key="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",
+    base_url="https://api.groq.com/openai/v1"
+)
+
+
 def save_to_history(story_text, user_input, uer_input_analysis=""):
     """Save FULL generated story to history file"""
     entry = {
@@ -106,42 +112,65 @@ def get_goal():
         return None
 
 
-def update_protagonists(new_characters):
-    """Add new characters to protagonists file"""
+def update_chars(new_characters, data):
+    """Add new characters to the chars dictionary in the data structure"""
     if not new_characters:
-        return
-
-    existing = []
-    if os.path.exists(PROTAGONISTS_FILE):
-        with open(PROTAGONISTS_FILE, 'r') as f:
-            existing = json.load(f)
+        return data
 
     added = 0
     for char in new_characters:
-        if not any(c['name'].lower() == char['name'].lower() for c in existing):
-            existing.append(char)
+        char_name = char['name'].lower()
+        if char_name not in data["chars"]:
+            data["chars"][char_name] = {
+                "name": char['name'],
+                "background": char.get('role', ''),
+                "act": char.get('characteristics', ''),
+                "info": char.get('backstory', ''),
+                "init": "",
+                "q_hello": "",
+                "q_important": "",
+                "q_help": "",
+                "notes": ""
+            }
             added += 1
 
-    with open(PROTAGONISTS_FILE, 'w') as f:
-        json.dump(existing, f, indent=2)
-    if (added > 0):
-        print(f"Added {added} new characters to {PROTAGONISTS_FILE}")
+    if added > 0:
+        print(f"Added {added} new characters to the story")
+    return data
 
 
-def parse_new_characters(story_text):
-    """Extract new characters from story text using LLM"""
-    client = get_client()
+def parse_new_characters(story_text, data, MODEL_NAME):
+    """Extract new characters from story text using LLM and update the data structure"""
 
     prompt = f"""Analyze this story segment and extract any NEW important characters:
     
     {story_text}
     
     Format response as JSON array with objects containing:
-    - name (string)
-    - role (string)
-    - characteristics (string)
-    - backstory (string)
-    Include ONLY newly introduced characters that should persist in the story."""
+    - name (string): The character's full name
+    - role (string): The character's role/background (e.g., "military commander", "scientist", "reporter")
+    - characteristics (string): Key personality traits and behaviors (e.g., "brave and strategic", "curious and analytical")
+    - backstory (string): Important background information and knowledge the character possesses
+    
+    Guidelines:
+    1. Include ONLY newly introduced characters that should persist in the story
+    2. Make role/background specific and descriptive
+    3. Focus on defining characteristics that would affect how they interact
+    4. Include relevant knowledge in backstory that would be useful for conversations
+    5. Keep descriptions concise but informative
+    6. Ensure the character would be interesting to interact with
+    
+    Example format:
+    {{
+        "characters": [
+            {{
+                "name": "General Lisa Chen",
+                "role": "Chief Strategist of Earth Defense Force",
+                "characteristics": "Analytical, decisive, and deeply committed to Earth's defense",
+                "backstory": "Expert in alien technology analysis and military strategy, has studied previous alien encounters extensively"
+            }}
+        ]
+    }}"""
 
     try:
         response = client.chat.completions.create(
@@ -150,11 +179,12 @@ def parse_new_characters(story_text):
             temperature=0.3,
             response_format={"type": "json_object"}
         )
-        return json.loads(response.choices[0].message.content).get('characters', [])
+        new_characters = json.loads(
+            response.choices[0].message.content).get('characters', [])
+        return update_chars(new_characters, data)
     except Exception as e:
         print(f"Character parsing failed: {str(e)}")
-        return []\
-
+        return data
 
 
 def story_generation(client, model_name, data, user_text):
@@ -410,112 +440,4 @@ Respond in JSON format:
     ending_line = result.get("ending_line", "")
     return status, reason, ending_line
 
-
-def run_mode2():
-    client = get_client()
-
-    last_segment = get_last_story_segment()
-    if not last_segment:
-        print("No existing story found in history!")
-        return
-
-    characters = load_characters()
-    char_summary = format_characters(characters)
-    goal = get_goal()
-    turn = 0
-
-    while True:
-        turn += 1
-        print(f"\n=== Turn {turn} ===")
-        continuation_prompt = input(
-            "Next story direction (or 'stop generation'): ")
-        if continuation_prompt.lower() == 'stop generation':
-            break
-
-        system_prompt = f"""Continue the story from this segment:
-        {last_segment}
-        
-        Existing Characters:
-        {char_summary}
-        
-        New Input: {continuation_prompt}
-        
-        Requirements:
-        - Generate 2-3 paragraphs of pure narrative continuation
-        - NO suggestions, notes, or commentary
-        - End with a scene break/cliffhanger in-universe
-        - Strictly avoid phrases like "could be continued" or "next chapter"
-        - Never include out-of-story text in parentheses/brackets
-        - Maintain immersive storytelling only"""
-
-        try:
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[
-                    {"role": "system", "content": "Expert serial fiction writer"},
-                    {"role": "user", "content": system_prompt}
-                ],
-                temperature=0.8,
-                max_tokens=1000
-            )
-
-            new_segment = response.choices[0].message.content
-            new_segment = new_segment.split(
-                "(Could be continued")[0]  # Remove trailing suggestions
-            new_segment = re.sub(r"\(.*?\)", "", new_segment)
-            print(new_segment)
-
-            # Check if action aligns with goal
-            goal_checking_prompt = f"""Analyze the player's action in relation to the goal.
-
-            Current Story Segment:
-            {last_segment}
-
-            Player's Action:
-            {continuation_prompt}
-
-            Goal of the Story:
-            {goal}
-
-            Determine:
-            - If the action progresses towards the goal
-            - If the action leads to failure (game over)
-            - If the action achieves the goal (win)
-            
-            Respond in JSON format:
-            {{
-                "status": "progress" | "game_over" | "win",
-                "reason": "Brief explanation"
-            }}"""
-
-            response = client.chat.completions.create(
-                model=MODEL_NAME,
-                messages=[{"role": "user", "content": goal_checking_prompt}],
-                temperature=0.3,
-                response_format={"type": "json_object"}
-            )
-
-            result = json.loads(response.choices[0].message.content)
-            status = result.get("status", "progress")
-            reason = result.get("reason", "")
-
-            save_to_history(new_segment, continuation_prompt, reason)
-            new_chars = parse_new_characters(new_segment)
-            update_protagonists(new_chars)
-
-            last_segment = new_segment
-            if new_chars:
-                characters.extend(new_chars)
-                char_summary = format_characters(characters)
-
-            if status == "game_over":
-                print(f"\n❌ Game Over: {reason}")
-                break
-            elif status == "win":
-                print(f"\n🎉 You Win! {reason}")
-                break
-            else:
-                print(f"\n✅ Progress: {reason}")
-
-        except Exception as e:
-            print(f"\nGeneration error: {str(e)}")
+# not used

@@ -8,7 +8,7 @@ import re
 import tkinter as tk
 from tkinter import messagebox
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
-from StoryGenerator import get_starting_prompt, get_initial_gen, format_characters, get_last_story_segment, story_generation,  check_goal
+from StoryGenerator import get_starting_prompt,get_initial_gen, format_characters, get_last_story_segment, story_generation, parse_new_characters, check_goal
 
 
 HISTORY_FILE = "history.json"
@@ -252,6 +252,7 @@ def run_generation(beginning_line):
 
     # Function to handle button click
     def on_submit():
+        global DATA
         user_text = textbox.get()
         input_type = get_response_content(classifier(client, user_text))
         print(input_type)
@@ -261,6 +262,7 @@ def run_generation(beginning_line):
                 response = get_response_content(story_generation(client, MODEL_NAME, DATA, user_text))
                 DATA["history"].append(["User", user_text])
                 DATA["history"].append([input_type, response])
+                DATA = parse_new_characters(response, DATA, MODEL_NAME)
             elif input_type in DATA["chars"].keys():
                 dv = get_dev_message(get_initial_prompt(
                     DATA, input_type), DATA["history"])
@@ -430,6 +432,7 @@ def run_mode1():
     goal_box.pack(pady=10)
 
     def on_submit():
+        global DATA
         title = title_box.get()
         genre = genre_box.get()
         num_char = num_char_box.get()
@@ -480,11 +483,11 @@ def run_mode2():
     title_box.pack(pady=10)
 
     def on_submit():
+        global DATA
         title = title_box.get()
         try:
             filename = title.replace(" ", "_") + ".json"
             with open(filename, 'r') as file:
-                global DATA
                 DATA = json.load(file)
             root.destroy()
         except Exception as e:
@@ -529,18 +532,6 @@ def main():
     new_button.pack(pady=10)
 
     root.mainloop()
-
-    """mode = input("\nSelect (1/2): ").strip()
-
-    if mode == "1":
-        if os.path.exists(HISTORY_FILE):
-            os.remove(HISTORY_FILE)
-        run_mode1()
-    elif mode == "2":
-        if not os.path.exists(HISTORY_FILE) or not os.path.exists(PROTAGONISTS_FILE):
-            print("Required files missing! Start with Mode 1 first.")
-            return
-        run_mode2() """
 
 
 if __name__ == "__main__":
