@@ -45,14 +45,7 @@ def get_response_content(response):
         return response.choices[0].message.content
 
 def classifier(client, user_input):
-    if MODEL_NAME == "claude-3-opus-20240229":
-        return client.messages.create(
-            model=MODEL_NAME,
-            temperature=0.6,
-            max_tokens=1000,
-            system=f"""You are a classifier. Your job is to determine the user's intent with his input.""",
-            messages=[
-                {"role": "user", "content": f"""
+    user_prompt = f"""
                         Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
                 If the user input is directed at the story generator, respond with \"story\".
                 If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
@@ -99,7 +92,15 @@ def classifier(client, user_input):
                 
                 The current conversation agent: {DATA["target"]}
                 User Input: {user_input}
-                """}
+                """
+    if MODEL_NAME == "claude-3-opus-20240229":
+        return client.messages.create(
+            model=MODEL_NAME,
+            temperature=0.6,
+            max_tokens=1000,
+            system=f"""You are a classifier. Your job is to determine the user's intent with his input.""",
+            messages=[
+                {"role": "user", "content": user_prompt}
             ]
         )
     elif MODEL_NAME == "mistral-large-latest":
@@ -108,54 +109,7 @@ def classifier(client, user_input):
             messages=[
                 {"role": "system",
                  "content": f"""You are a classifier. Your job is to determine the user's intent with his input."""},
-                {"role": "user", "content": f"""
-                        Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
-                If the user input is directed at the story generator, respond with \"story\".
-                If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
-                part of the following: {list(DATA["chars"].keys())}
-                
-                Here are a few examples:
-                Current conversation agent: story
-                User input: I walk down the hallway
-                Your response: story
-                You respond with story because the user is currently using the story agent and by issuing directions to progress the story they \
-                clearly wish to continue using the story agent
-                
-                Current conversation agent: John
-                User input: How was your day?
-                Your response: John
-                You respond with John as the user is currently conversing with John and the input is clearly directed at a character, meaning they desire to continue conversing with John
-                
-                
-                Context: the bartender's name is Chuck
-                Current conversation agent: story
-                User input: I approach the bartender
-                Your response: Chuck
-                You respond with Chuck as the user is currently using the story agent but clearly wishes to begin a conversation with the Bartender.\
-                 You respond with Chuck because the bartender's name is Chuck, but if the bartender's name was John, you would respond with John.
-                 
-                Current conversation agent: Chuck
-                User input: I get up from the bar and leave the room
-                Your response: story
-                You respond with story as while the user was previously conversing with Chuck, the direction clearly \
-                indicates that the user wishes leave the conversation and progress with the story agent.
-                
-                
-                Here is the current context that you are provided with:
-                Characters:
-                {format_characters(DATA)}
-                
-                Conversation History:
-                {get_last_story_segment(DATA)}
-                
-                Remember to respond ONLY with "story" or a character's name. Do not include any other information in the response.
-                Also remember that if you respond with a character's name, it MUST be included in the following list {list(DATA["chars"].keys())}.
-                DO NOT respond with a name not on the provided list. Your only valid responses are names from that list or "story".
-                
-                
-                The current conversation agent: {DATA["target"]}
-                User Input: {user_input}
-                """}
+                {"role": "user", "content": user_prompt}
             ]
         )
     else:
@@ -163,54 +117,7 @@ def classifier(client, user_input):
             model=MODEL_NAME,
             messages=[
                 {"role": "system", "content": f"""You are a classifier. Your job is to determine the user's intent with his input."""},
-                {"role": "user", "content": f"""
-                        Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
-                If the user input is directed at the story generator, respond with \"story\".
-                If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
-                part of the following: {list(DATA["chars"].keys())}
-                
-                Here are a few examples:
-                Current conversation agent: story
-                User input: I walk down the hallway
-                Your response: story
-                You respond with story because the user is currently using the story agent and by issuing directions to progress the story they \
-                clearly wish to continue using the story agent
-                
-                Current conversation agent: John
-                User input: How was your day?
-                Your response: John
-                You respond with John as the user is currently conversing with John and the input is clearly directed at a character, meaning they desire to continue conversing with John
-                
-                
-                Context: the bartender's name is Chuck
-                Current conversation agent: story
-                User input: I approach the bartender
-                Your response: Chuck
-                You respond with Chuck as the user is currently using the story agent but clearly wishes to begin a conversation with the Bartender.\
-                 You respond with Chuck because the bartender's name is Chuck, but if the bartender's name was John, you would respond with John.
-                 
-                Current conversation agent: Chuck
-                User input: I get up from the bar and leave the room
-                Your response: story
-                You respond with story as while the user was previously conversing with Chuck, the direction clearly \
-                indicates that the user wishes leave the conversation and progress with the story agent.
-                
-                
-                Here is the current context that you are provided with:
-                Characters:
-                {format_characters(DATA)}
-                
-                Conversation History:
-                {get_last_story_segment(DATA)}
-                
-                Remember to respond ONLY with "story" or a character's name. Do not include any other information in the response.
-                Also remember that if you respond with a character's name, it MUST be included in the following list {list(DATA["chars"].keys())}.
-                DO NOT respond with a name not on the provided list. Your only valid responses are names from that list or "story".
-                
-                
-                The current conversation agent: {DATA["target"]}
-                User Input: {user_input}
-                """},
+                {"role": "user", "content": user_prompt},
             ],
             stream=False
         )

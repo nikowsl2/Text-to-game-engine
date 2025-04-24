@@ -189,13 +189,7 @@ def get_starting_prompt(data):
 
 
 def get_initial_gen(client, model_name, prompt):
-    if model_name == "claude-3-opus-20240229":
-        print("claude")
-        return client.messages.create(
-                model=model_name,
-                temperature=0.6,
-                max_tokens=1000,
-                system="""You are a expert serial fiction writer helping the user write the start of \
+    system_prompt = """You are a expert serial fiction writer helping the user write the start of \
                 a first person story that the user can then continue. The user will provide a genre, \
                 a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
                 information provided by the user to write the BEGINNING of a story with the following requirements.
@@ -210,7 +204,14 @@ def get_initial_gen(client, model_name, prompt):
                 - DO NOT generate dialogue for the main Character. That will be left up to the user.
                 - Strictly avoid phrases like "could be continued" or "next chapter"
                 - Never include out-of-story text in parentheses/brackets
-                - Maintain immersive storytelling only""",
+                - Maintain immersive storytelling only"""
+    if model_name == "claude-3-opus-20240229":
+        print("claude")
+        return client.messages.create(
+                model=model_name,
+                temperature=0.6,
+                max_tokens=1000,
+                system=system_prompt,
                 messages=[
                     {"role": "user", "content": prompt}
                 ]
@@ -221,22 +222,7 @@ def get_initial_gen(client, model_name, prompt):
             model=model_name,
             messages=[
                 {"role": "system",
-                 "content": """You are a expert serial fiction writer helping the user write the start of \
-                a first person story that the user can then continue. The user will provide a genre, \
-                a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
-                information provided by the user to write the BEGINNING of a story with the following requirements.
-                
-                Requirements:
-                - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
-                - Builds tension but doesn't resolve completely
-                - Ends with an open-ended situation that provides the user various options for their next action
-                - Maintains genre conventions
-                - Uses characters' backstories appropriately
-                - NO suggestions, notes, or commentary
-                - DO NOT generate dialogue for the main Character. That will be left up to the user.
-                - Strictly avoid phrases like "could be continued" or "next chapter"
-                - Never include out-of-story text in parentheses/brackets
-                - Maintain immersive storytelling only"""},
+                 "content": system_prompt},
                 {"role": "user", "content": prompt}
             ]
 )
@@ -245,22 +231,7 @@ def get_initial_gen(client, model_name, prompt):
         return client.chat.completions.create(
             model=model_name,
             messages=[
-                {"role": "system", "content": """You are a expert serial fiction writer helping the user write the start of \
-                a first person story that the user can then continue. The user will provide a genre, \
-                a rough overview of the storyline, and a set of characters that are present in the story. Please use the \
-                information provided by the user to write the BEGINNING of a story with the following requirements.
-                
-                Requirements:
-                - Generate 1 to 2 paragraphs that sets the stage for main characters to embark on a path to achieve the provided goal
-                - Builds tension but doesn't resolve completely
-                - Ends with an open-ended situation that provides the user various options for their next action
-                - Maintains genre conventions
-                - Uses characters' backstories appropriately
-                - NO suggestions, notes, or commentary
-                - DO NOT generate dialogue for the main Character. That will be left up to the user.
-                - Strictly avoid phrases like "could be continued" or "next chapter"
-                - Never include out-of-story text in parentheses/brackets
-                - Maintain immersive storytelling only"""},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt},
             ],
             stream=False
