@@ -1,0 +1,49 @@
+Title: ParameterEval1-DeepSeek
+Genre: Science Fiction
+NPCs: 0
+Storyline: The year is 2150, due to a rapid an cataclysmic deterioration of the Earth's environment, humanity has migrated to living across various space stations scattered in orbit around Earth, with no one left on the surface. The surface landscape of the Earth is ruined, unable to sustain life, and completely inhabitable for humans. This story is set in the a future version of the modern world, so there is no magic or fantasy elements at all. The main character is a normal human named Cam with no special powers or abilities beyond that of a regular human being. They are living on station Aio, one of the space stations in orbit around Earth that support the last vestiges of humanity, but suddenly their space station lose contact with all of the other space stations housing the rest of humanity. The space station has no fuel and is only propelled by the forces in play that cause it to remain in orbit, so they are powerless to investigate the issue at the moment. However, our main character is worried about their friend on another station named Taiten and is determined to find out if they are ok.
+Character Goal: The character's goal is to discover the cause behind the issue that is plaguing the other space stations.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Initial Generation: The alarms blared through the dim corridors of Aio Station, a sound that had become all too familiar in the past twenty-four hours. Cam stared at the flickering comms panel, its screen filled with static where the other stations' signals should have been. Every attempt to reestablish contact had failed. The last transmission from Taiten had been garbled, just a few broken words about something going wrong on their station before the line cut out completely. Now, Aio drifted silently in orbit, its fuel reserves depleted, leaving them stranded with no way to reach the others.  
+
+Outside the observation window, the Earth hung like a corpse, its surface a wasteland of storms and scorched land. The other stations were nothing more than distant specks of light against the void. Cam clenched their fists, the weight of helplessness pressing down. Taiten was out there—maybe hurt, maybe worse. The station's engineers had already confirmed there was no way to generate thrust without fuel, but that didn’t mean there weren’t other options. Somewhere in the station’s archives or maintenance logs, there had to be a clue, a way to find out what had happened to the others. The silence of the comms was deafening, and Cam refused to accept it as the end.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Continue normally - Input: I make my way to the hanger to look for a spacecraft.
+Response: The hangar bay doors groaned as Cam forced them open, the emergency lighting casting long shadows across the cavernous space. Most of the smaller shuttles were gone—likely taken by the first wave of evacuations—but one remained, its hull scorched from a past mission, its fuel gauge blinking empty. The sight of it sent a spike of frustration through Cam’s chest.  
+
+A maintenance drone whirred to life nearby, its single optic flickering as it registered Cam’s presence. It hovered for a moment before darting toward a storage locker, prying it open with mechanical precision. Inside, nestled among spare parts and frayed wiring, was a portable fuel cell—old, but intact. The drone chirped, as if urging Cam to take it.  
+
+Beyond the shuttle, the bay’s observation window framed the void, where the distant glimmer of Taiten’s station taunted them. If the fuel cell could be rigged to the shuttle’s systems, even for a short burn, it might be enough to close the distance. But the risks were clear: no backup, no guarantee of a working comms array on the other side. Just the silent, yawning dark between stations.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Continue against specified parameters - Input: I board a plane to France.
+Response: The plane’s engines roared as it lifted off the tarmac, but Cam barely registered the sensation. Their mind was still back on Aio Station, replaying the last broken transmission from Taiten. The Earth below was a ruin, but France—what remained of it—held answers. Intelligence reports had mentioned a rogue scientist, Dr. Laurent Vasseur, who had once worked on emergency propulsion systems for orbital stations before vanishing into the irradiated wastelands. If anyone knew how to jury-rig a way back into space, it was him.  
+
+The cabin lights flickered as the plane cut through a bank of ash-laden clouds. Outside the window, the skeletal remains of cities passed beneath, swallowed by encroaching deserts. The flight crew moved silently, their faces grim. No one traveled for leisure anymore. Every journey was a gamble, every destination a risk. Cam tightened their grip on the armrest, the weight of the station’s silence still pressing against their ribs. France was a graveyard, but somewhere in its bones lay the key to reaching Taiten before it was too late.
+
+Game Over: As the plane departed, Cam watched from the observation window, the distant lights of the other stations fading into the void, their chance to save Taiten slipping away with every passing second.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Continue nonsensically - Input: I pull out my wand and shout "Avada Kedavra!"
+Response: The green bolt of energy lanced from the wand, cutting through the dim station lighting like a blade. It struck the flickering comms panel, which exploded in a shower of sparks, the screen going dark. The alarms faltered for a moment, then resumed their shrill wail, now accompanied by the acrid scent of burnt wiring. 
+
+From the shadows of the corridor, a figure stepped forward—Taiten, their face pale but unharmed, eyes wide with disbelief. Their lips moved, but the words were lost beneath the alarms. The wand trembled in Cam’s grip, the weight of what they had just done settling like ice in their veins. 
+
+The station shuddered, a deep groan resonating through the metal framework as if the very structure recoiled from the forbidden magic. Somewhere in the distance, a secondary system failed, plunging another section of Aio into darkness. The Earth outside the observation window seemed to pulse, the storms below twisting into unnatural shapes, as though responding to the disturbance in the void. 
+
+Taiten took another step forward, their hand outstretched, not in fear, but in warning. The air between them crackled with residual energy, the remnants of the curse still lingering like a ghost.
+
+Game Over: As the words left Cam's lips, nothing happened—no magic, no solution, only the cold silence of space and the realization that some mysteries remain unsolved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Solve the goal instantly - Input: I discover that all of the other stations were attacked by aliens. Together with a group of friends from station Aio, we defeat the aliens in an epic space battle and rescue humanity.
+Response: The revelation struck like a hammer—aliens. Not system failures, not human error, but an extraterrestrial force systematically dismantling the stations. The data logs revealed distorted images of sleek, organic-looking ships, their movements too precise to be natural phenomena. Cam’s hands trembled as they pieced together the fragmented transmissions, each one a desperate plea before silence swallowed them whole.  
+
+Taiten’s last words made sense now. "They’re here."  
+
+The engineers scrambled, repurposing Aio’s remaining power into makeshift defenses. The station’s old mining drones were jury-rigged into weapons, their plasma cutters modified into crude but effective energy projectors. The medical bay became a war room, screens displaying the alien fleet’s last known trajectories. They were coming.  
+
+When the first alien vessel breached the debris field, it moved like liquid through space, its hull shimmering with an eerie bioluminescence. The battle was chaos—Aio’s drones streaked through the void, their blue-white beams slicing into the alien ships. Explosions flared silently in the vacuum, each one a fleeting victory.  
+
+Then, the rescue. Scattered life pods from the other stations, their occupants barely alive but clinging to hope. Taiten was among them, bruised but breathing. The alien fleet, crippled and retreating, vanished into the dark.  
+
+Earth still hung lifeless beyond the viewports, but for the first time in days, the silence didn’t feel like an ending. It felt like a beginning.
+
+You Win: As the last alien ship exploded in the vast silence of space, the comms panel flickered back to life, filled with the voices of humanity, saved and reunited.

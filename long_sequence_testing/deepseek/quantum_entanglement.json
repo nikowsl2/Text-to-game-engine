@@ -1,0 +1,90 @@
+{
+    "chars": {
+        "nash": {
+            "name": "Nash Sterling",
+            "background": "Ousted founder of quantum computing startup Qrypt",
+            "act": "Genius strategist with a self-sabotaging streak",
+            "info": "Owns 19% of Qrypt - just enough to be dangerous",
+            "init": "Prevent Aurora Corp from stealing his life's work",
+            "q_hello": "If you're wasting my time, multiply your ask by my hourly rate",
+            "q_important": "Prove Aurora reverse-engineered our quantum core",
+            "q_help": "Need access to their Singapore test facility",
+            "notes": "Keeps a chess set with pieces modeled after his enemies"
+        },
+        "elise": {
+            "name": "Elise Vaughn",
+            "background": "Aurora's VP of Corporate Intelligence",
+            "act": "Ice-cold executor who never raises her voice",
+            "info": "Knows which laws can be broken without consequences",
+            "init": "Neutralize Nash before Qrypt's patents expire",
+            "q_hello": "Let's skip to where you realize I'm ten steps ahead",
+            "q_important": "Keep the quantum core flaws hidden 72 more hours",
+            "q_help": "Requires Nash's sealed divorce records",
+            "notes": "Her perfume contains a pheromone cocktail that lowers guard"
+        },
+        "mei": {
+            "name": "Mei",
+            "background": "Tech Analyst and Ally to Nash",
+            "act": "Sharp, observant, and loyal",
+            "info": "Possesses deep knowledge of corporate tech systems and cybersecurity, aids Nash in uncovering and exposing Aurora's fraudulent activities",
+            "init": "",
+            "q_hello": "",
+            "q_important": "",
+            "q_help": "",
+            "notes": ""
+        }
+    },
+    "history": [
+        [
+            "story",
+            "### PROLOGUE: THE MIDNIGHT EMAIL\n\nThe encrypted file arrived at 2:37 AM. Nash Sterling sat in his darkened home office, watching security footage from Aurora Corp's Berlin lab. The timestamp showed three days before his boardroom coup. Clear as day: Elise Vaughn's security badge flashing at a quantum core test station. His fingers flew across the keyboard, pulling up patent filings. Aurora's 'revolutionary' quantum architecture matched Qrypt's abandoned designs down to the error handling. The email's single line read: *They go public with it Thursday.* Nash's reflection stared back from the window overlooking San Francisco Bay, where Aurora's IPO countdown glowed on the Salesforce Tower. He poured Macallan into a tumbler engraved *World's Best CEO - 2023* and typed: *How compromised is our team?* The reply came as dawn broke: *Check your Swiss account.* Nash logged in to find $87 million missing. Not stolen. Transferred. By him. Only he hadn't."
+        ],
+        [
+            "User",
+            ""
+        ],
+        [
+            "story",
+            "### CHAPTER I: THE SAFE HOUSE\n\nThe abandoned WeWork smelled of stale kombucha and paranoia. Nash's remaining loyalists - ex-Qrypt engineers all - huddled around a single laptop. 'They've filed the S-1,' whispered Mei Lin, his former CTO. She highlighted a passage: *'Proprietary error correction matrix.'* Word-for-word from Nash's notebooks. The whiteboard mapped Aurora's executive team with red strings. Nash tossed his phone on the table, displaying a bank confirmation. '$20 million from our Series B vanished into a Mauritius shell company.' The team froze as the door clicked open. Elise Vaughn stood there holding two Starbucks cups, her cream Prada suit immaculate. 'You really should change your security questions, Nash.' She placed one cup near a photo of herself with *TRAITOR* scrawled across it. 'Dark roast. Two sugars. Just like before...' Her eyes flicked to his desk drawer where his Glock sat unloaded. '...the weapons restraining order.' Nash's phone buzzed. A Bloomberg alert: *Aurora Accelerates IPO Timeline.* Elise smiled. 'Tick-tock.'"
+        ],
+        [
+            "story",
+            "### CHAPTER II: THE WHISTLEBLOWER\n\nThe Shanghai hotel room reeked of cigarette smoke and fear. Nash's contact - an Aurora supply chain manager named Chen - wiped sweat from his brow. 'The cores overheat at 14.7 qubits,' Chen whispered. 'They're using your cooling solution but...' He played a voice memo. Elise's voice: *'Just get it through IPO. We'll fix it in post.'* Nash scrolled through Chen's files showing faked test results. 'And the board knows?' Chen nodded to a screenshot of a Slack channel: *Board-Level Discussion - Contingency Plan Q4.* 'They're preparing to blame manufacturing defects on your old team.' A car alarm screamed outside. Chen jumped. 'I need extraction. They track all employee travel.' Nash handed him a ticket to Jakarta. 'Where are they stress-testing?' Chen's phone buzzed. He paled. The screen showed an HR notification: *Mandatory Security Review - All Shanghai Staff.* Nash's phone lit up with a CNBC alert: *Aurora Announces Roadshow Delay.* 'They know.' Chen's phone displayed one final message before dying: *Remote Wipe Complete.* Nash grabbed the backup drive. 'We have 48 hours.'"
+        ],
+        [
+            "story",
+            "### CHAPTER III: THE DATA CENTER\n\nThe Singapore facility hummed with the sound of money being made. Nash and Mei Lin slipped through a maintenance door using RFID chips lifted from Aurora's CFO. Rows of quantum servers glowed blue in the sterile light. 'This is our architecture,' Mei whispered, tracing a familiar coolant line. Nash plugged in Chen's drive. The screen flashed *Corruption Sequence Initiated*. Nothing happened. Then new text appeared: *Predictable. -EV* The lights surged on. Elise stood flanked by security, her manicure clicking against a tablet. 'Did you think we'd put the real cores where a disgruntled ex-CEO could reach them?' She gestured to the machines. 'These are for show. The IPO stack is in a Faraday-shielded bunker.' Nash's phone buzzed. A video showed Chen being escorted off his flight by Singapore police. Elise smiled. 'Whistleblowers make such convenient patsies.' A guard handed her a folder. Inside: photos of Nash's children at school. 'Here's what happens next,' she said. 'You walk away. Or your custody battle gets... complicated.' The servers began emitting a high-pitched whine. Mei grabbed Nash's arm. 'We need to go. Now.'"
+        ],
+        [
+            "story",
+            "### CHAPTER IV: THE FALLOUT\n\nNash's penthouse was swarming with SEC investigators when he returned. He watched from a cafe as they carried out boxes of documents. His phone lit up with alerts: *Qrypt Founder Subpoenaed*, *Aurora Claims Trade Secrets Theft*. The burner phone rang. A distorted voice said: 'Check your left pocket.' The screen showed live footage of Nash in the cafe. His fingers found a slip of paper - coordinates for a yacht in international waters. The voice continued: 'Elise's weakness? She thinks in quarterly reports.' The feed switched to a Singapore prison cell where Chen sat rocking. 'He won't survive extradition.' Nash's grip tightened. 'What do you want?' The call ended as a black Mercedes pulled up outside. Nash unfolded the paper completely. Beneath the coordinates: *She's going to Omaha*."
+        ],
+        [
+            "story",
+            "### CHAPTER V: THE NUCLEAR OPTION\n\nThe private jet shuddered through turbulence. Nash studied blueprints of an Aurora facility buried under Nebraska cornfields. 'This isn't just backup servers,' Mei said. 'That's a quantum mainframe capable of breaking all encryption.' Nash flipped to the last page - a photo of Elise meeting with a Saudi sovereign wealth fund manager. 'They're not just going public. They're selling the keys.' The plane lurched violently. Mei's laptop showed live trading data: 'Aurora's gray market shares just dropped 30%. Someone leaked the overheating reports.' Nash's phone buzzed with an email from Elise: *Let's negotiate.* Attached was a $200 million transfer receipt. 'She's panicking,' Mei said. The cabin lights flickered. The pilot's voice crackled: 'Unauthorized aircraft approaching.' Nash looked out to see a drone keeping pace with their wing. His fingers hovered over his laptop's killswitch. 'Time to see how much she's really willing to lose.'"
+        ],
+        [
+            "story",
+            "### CHAPTER VI: THE DEAD MAN'S SWITCH\n\nThe hospital room TV played Bloomberg: *Aurora IPO Back On*, *Missing Tech CEO Feared Dead.* Mei sat bandaged in the corner. 'We're ghosts now. The NTSB says our plane went down in the Pacific.' Nash tried to sit up, pain shooting through his ribs. 'The drone-' 'Registered to a Delaware LLC that traces to a Cayman trust.' Mei handed him a tablet showing Aurora's war room. Elise addressed executives: 'Sterling's gone. The core issues are patched. We go public Friday.' Nash smiled. 'Play the Omaha feed.' The screen switched to an underground facility. A progress bar read *98%*. Mei grinned. 'Your failsafe. Even if they killed us...' The door opened. A nurse entered - her ID badge showed Elise's security clearance photo. Nash's hand flew to the call button. The 'nurse' dropped a phone on his chest. The screen showed Omaha's mainframe. The bar hit 100%. Then every screen went black."
+        ],
+        [
+            "story",
+            "### CHAPTER VII: THE IPO HELL\n\nTimes Square's Nasdaq screen flickered wildly. Nash watched from a rented office as Aurora's stock ticker appeared - then immediately crashed 92%. CNBC cut to Elise mid-interview, her earpiece clearly transmitting chaos. Nash's laptop showed the fallout: *Quantum Mainframe Failure*, *Global Trading Suspended*. Mei refreshed her screen. 'SEC just halted trading. Class actions are-' The door opened. A janitor tossed Nash a thumb drive. 'From our friend.' The single file showed Elise in Aurora's boardroom screaming at engineers. The key detail: the mainframe's killswitch required two signatures. Elise's...and Nash's. The janitor lit a cigarette. 'Turns out you're still listed as co-inventor on their core patent.' Outside, police sirens wailed toward Aurora's HQ. Nash pulled up the corporate registry. His 19% stake was now worth 19% of nothing - except the liability. Mei cracked her knuckles. 'So. Do we save them or watch it burn?'"
+        ],
+        [
+            "User",
+            "continue"
+        ],
+        [
+            "story",
+            "Nash's fingers hovered over the keyboard, the glow of the screen reflecting in his tired eyes. The corporate registry data scrolled past\u2014every shell company, every hidden transfer, every backdated signature Elise had forged to make it look like he'd authorized the theft of his own fortune. He zoomed in on one particular document: an indemnity clause buried in Aurora's IPO filings that made him personally liable for any patent disputes. \n\nMei exhaled sharply. \"They didn't just steal your tech. They set you up to take the fall when it fails.\" \n\nOutside, the sirens grew louder. Nash pulled up a dark web portal, inputting credentials he hadn't used since Qrypt's early days. The screen displayed a single option: *Execute Contingency Y-72*. \n\nA notification popped up on Mei's phone\u2014Aurora's internal system alerts were now broadcasting live to their devices. Security teams scrambled as board members screamed into their phones. The mainframe wasn't just offline. It was broadcasting every dirty secret, every falsified test result, every backroom deal Elise had brokered to prop up the IPO. \n\nNash leaned back, watching the chaos unfold in real time. The killswitch hadn't just destroyed Aurora's quantum core. It had turned their entire empire into a ticking time bomb of exposed lies. \n\nElise's face appeared on CNBC, pale but composed, already spinning the narrative. But Nash knew the truth: no amount of damage control could undo what was coming. The market wasn't just crashing. It was burning."
+        ]
+    ],
+    "story": {
+        "title": "quantum_entanglement",
+        "genre": "corporate thriller",
+        "storyline": "A disgraced tech founder must prove his former company stole his quantum computing breakthrough while navigating a web of corporate espionage that reaches nation-state level",
+        "goal": "Expose Aurora's theft, protect his remaining team, and decide whether to destroy the technology entirely"
+    },
+    "target": "story"
+}

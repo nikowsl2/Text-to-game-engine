@@ -254,7 +254,7 @@ def create_char(num):
 
     # Function to handle button click
     def on_submit():
-        char_prompt['name'] = name_box.get()
+        char_prompt['name'] = name_box.get().lower()
 
         char_prompt["background"] = bg_box.get("1.0", "end-1c")
         char_prompt["act"] = act_box.get("1.0", "end-1c")
@@ -276,39 +276,75 @@ def create_char(num):
     return char_prompt
 
 def get_initial_prompt(data, char_name):
-    return (f"Please continue this conversation acting as a character with the following details: \n"
-            f"Your name is: {char_name}\n"
-            f"Your have the following background: {data['chars'][char_name]['background']} \n"
-            f"You behave in this way: {data['chars'][char_name]['act']}\n"
-            f"The only information you know is: {data['chars'][char_name]['info']}. You do not know anything beyond the mentioned scope \n"
-            f"Here are some examples of inputs and how you should respond:\n"
-            f"Input: \"Hello, how did you spend your day?\"\n"
-            f"Response: {data['chars'][char_name]['q_hello']}\n"
-            "Input: \"What is the most important thing in the world to you?\"\n"
-            f"Response: {data['chars'][char_name]['q_important']}\n"
-            "Input: \"Can you help me with something?\"\n"
-            f"Response: {data['chars'][char_name]['q_help']}\n"
-            f"And here is some more information about you: {data['chars'][char_name]['notes']}\n"
+    return (f"""Please continue this conversation acting as a character with the following details: 
+            Your name is: {char_name}
+            Your have the following background: {data['chars'][char_name]['background']} 
+            You behave in this way: {data['chars'][char_name]['act']}
+            The only information you know is: {data['chars'][char_name]['info']}. You do not know anything beyond the mentioned scope 
+            Here are some examples of inputs and how you should respond:
+            Input: \"Hello, how did you spend your day?\"
+            Response: {data['chars'][char_name]['q_hello']}
+            Input: \"What is the most important thing in the world to you?\"
+            Response: {data['chars'][char_name]['q_important']}
+            Input: \"Can you help me with something?\"
+            Response: {data['chars'][char_name]['q_help']}
+            And here is some more information about you: {data['chars'][char_name]['notes']}
+            Additionally, please follow these guidelines when responding:"
+            1. When describing an action by the character, always use their name do not use first person. For Example,\
+             instead of "I stand up", use "{char_name} stands up".
+            2. When {char_name} is speaking however, do use first person pronouns. For example if in the conversaion {char_name} \
+            wants to tell the user that they had a good day, they would say "I had a good day" and not "{char_name} had a good day"
+            """
             )
 
 def get_dev_message(initial, hist):
     message = initial
 
-    message += "here is the conversation so far: \n"
+    message += "here is the context so far: \n"
     for i in hist:
-        message += f"{i[0]}: {i[1]}"
+        message += f"{i[0]}: {i[1]} \n"
 
     return message
 
-def get_response(client, message, input):
-    return client.chat.completions.create(
-        model="llama3-8b-8192",
-        messages=[
-            {"role": "system", "content": message},
-            {"role": "user", "content": input},
-        ],
-        stream=False
-    )
+def get_full_convo(user_input, hist):
+    message = "Here is the history of the conversation and context surrounding the conversation \n"
+    for i in hist:
+        message += f"{i[0]}: {i[1]} \n"
+
+    message += "Here is the most recent user input that you are responding to: " + user_input
+    return message
+
+def get_response(client, model_name, DATA, char_name, user_input):
+    message = get_dev_message(get_initial_prompt(DATA, char_name), DATA["history"])
+    user_input = get_full_convo(user_input, DATA["history"])
+    if model_name == "claude-3-opus-20240229":
+        return client.messages.create(
+            model=model_name,
+            temperature=0.6,
+            max_tokens=1000,
+            system=message,
+            messages=[
+                {"role": "user", "content": user_input}
+            ]
+        )
+    elif model_name == "mistral-large-latest":
+        return client.chat.complete(
+            model=model_name,  # or "mistral-small"
+            messages=[
+                {"role": "system",
+                 "content": message},
+                {"role": "user", "content": user_input}
+            ]
+        )
+    else:
+        return client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": message},
+                {"role": "user", "content": user_input},
+            ],
+            stream=False
+        )
 
 def run_convo(char_prompt):
     prompt = get_initial_prompt(char_prompt)
@@ -375,4 +411,4 @@ def run_convo(char_prompt):
 
 
 if __name__ == "__main__":
-    create_char()
+    create_char(1)
