@@ -1,5 +1,5 @@
 from openai import OpenAI
-import mistralai
+# import mistralai
 import json
 
 
@@ -205,6 +205,7 @@ def get_initial_gen(client, model_name, prompt):
                 - Strictly avoid phrases like "could be continued" or "next chapter"
                 - Never include out-of-story text in parentheses/brackets
                 - Maintain immersive storytelling only"""
+    
     if model_name == "claude-3-opus-20240229":
         print("claude")
         return client.messages.create(
@@ -249,6 +250,7 @@ def check_goal(client, model_name, data):
             break
 
     latest_story_before_user = None
+    
     if last_user_index is not None:
         for i in range(last_user_index - 1, -1, -1):
             if history[i][0] == "story":
@@ -262,25 +264,27 @@ def check_goal(client, model_name, data):
         f"{c['name']}: {c['background']}" for c in chars.values()
     ])
 
-    system_prompt = f"""Analyze the player's action in relation to the goal.
-Storyline: {storyline}
-Current Story Segment: {latest_story_before_user}
-Player's Action: {last_user_prompt}
-Goal of the Story: {goal}
-Characters:
-{character_summaries}
+    system_prompt = f"""
+        Analyze the player's action in relation to the goal.
+        Storyline: {storyline}
+        Current Story Segment: {latest_story_before_user}
+        Player's Action: {last_user_prompt}
+        Goal of the Story: {goal}
+        Characters:
+        {character_summaries}
 
-Determine:
-- If the action progresses towards the goal
-- If the action leads to failure (game over)
-- If the action achieves the goal (win)
+        Determine:
+        - If the action progresses towards the goal
+        - If the action leads to failure (game over)
+        - If the action achieves the goal (win)
 
-Respond in JSON format:
-{{
-    "status": "progress" | "game_over" | "win",
-    "reason": "Brief explanation"
-    "ending_line": A dramatic narrative sentence for win or game_over status, otherwise leave empty.
-}}"""
+        Respond in JSON format:
+        {{
+            "status": "progress" | "game_over" | "win",
+            "reason": "Brief explanation"
+            "ending_line": A dramatic narrative sentence for win or game_over status, otherwise leave empty.
+        }}
+    """
 
     if model_name == "claude-3-opus-20240229":
         response = client.messages.create(

@@ -1,12 +1,18 @@
 from openai import OpenAI
-import anthropic
-import mistralai
+# import anthropic
+# import mistralai
 import json
 import tkinter as tk
 from tkinter import messagebox
+
+import MemoryAgent
+
 from NPC import create_char, get_initial_prompt, get_dev_message, get_response
 from StoryGenerator import get_starting_prompt,get_initial_gen, format_characters, get_last_story_segment, story_generation, parse_new_characters, check_goal
 
+#Debugging Flags
+DEBUG_MODE = True
+PERSIST_DB_ENTRIES = False
 
 HISTORY_FILE = "history.json"
 PROTAGONISTS_FILE = "protagonists.json"
@@ -15,6 +21,11 @@ DATA = {
     "chars": {},
     "history": []
 }
+
+DB_PATH = "./chroma_db"
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+
 client = OpenAI(
     api_key="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",
     base_url="https://api.groq.com/openai/v1"
@@ -28,11 +39,11 @@ DEEPSEEK_MODEL_NAME = "deepseek-chat"
 gpt = OpenAI(api_key="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")
 GPT_MODEL_NAME = "gpt-4.1-2025-04-14"
 
-claude = anthropic.Anthropic(api_key="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")
-CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
+# claude = anthropic.Anthropic(api_key="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")
+# CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 
-mistral = mistralai.Mistral(api_key="e7DlAIjT1Nen1Bje2Mb9uDarABQ4iOmD")
-MISTRAL_MODEL_NAME = "mistral-large-latest"
+# mistral = mistralai.Mistral(api_key="e7DlAIjT1Nen1Bje2Mb9uDarABQ4iOmD")
+# MISTRAL_MODEL_NAME = "mistral-large-latest"
 
 def get_client():
     return client
@@ -46,7 +57,7 @@ def get_response_content(response):
 
 def classifier(client, user_input):
     user_prompt = f"""
-                        Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
+                Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
                 If the user input is directed at the story generator, respond with \"story\".
                 If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
                 part of the following: {list(DATA["chars"].keys())}
@@ -123,7 +134,7 @@ def classifier(client, user_input):
             stream=False
         )
 
-
+#Game interface
 def run_generation(beginning_line):
     # Create the main window
     root = tk.Tk()
@@ -165,22 +176,31 @@ def run_generation(beginning_line):
         if user_text:
             if input_type == "story":
                 response = get_response_content(story_generation(client, MODEL_NAME, DATA, user_text))
+
                 DATA["history"].append(["User", user_text])
                 DATA["history"].append([input_type, response])
                 DATA = parse_new_characters(response,client, DATA, MODEL_NAME)
+
+                memComponent.updateMetadata(response, user_text)
+
             elif input_type in DATA["chars"].keys():
                 dv = get_dev_message(get_initial_prompt(
-                    DATA, input_type), DATA["history"])
+                    DATA, input_type), DATA["history"])                
                 response = get_response_content(get_response(
                     client, MODEL_NAME, DATA, input_type, user_text))
+                
                 DATA["history"].append(["User", user_text])
                 DATA["history"].append([input_type, response])
+
+                memComponent.updateMetadata(response, user_text)
             else:
                 print(DATA["chars"].keys())
+                
                 messagebox.showerror(
                     "An issue occured!", "Uh Oh, the AI is stupid and can't process your input")
         else:
             messagebox.showwarning("Empty Input", "Please enter some text!")
+
         text.config(state="normal")
         text.insert("end", f"\n")
         text.insert("end", f"You: {user_text}\n\n", "user_text")
@@ -209,6 +229,7 @@ def run_generation(beginning_line):
         text.config(state="disabled")
         text.see(tk.END)
         textbox.delete(0, tk.END)
+
     # Submit button
     submit_button = tk.Button(root, text="Generate", command=on_submit)
     submit_button.pack(pady=10)
@@ -337,6 +358,25 @@ def run_mode1():
     goal_box = tk.Entry(root, width=50)
     goal_box.pack(pady=10)
 
+    #Debug Mode - Pre-populate fields for testing purposes.
+    #TODO: Remove after implementation is completed.
+    if DEBUG_MODE:
+        story_name = "Test"
+        story_genre = "Science Fiction"
+        story_text = ("In a fractured galaxy where humanity teeters on extinction after unearthing a volatile alien relic, "
+            "you play a rogue mercenary thrust into a war between rival factions and ancient AI. Your choices determine whether "
+            "to salvage civilization, harness the relic’s reality-bending power, or watch the cosmos collapse."
+        )
+        story_goal = ("The player must decide whether to secure the alien relic to unite the warring factions, exploit its "
+        "power for personal dominance, or let chaos consume the galaxy, shaping the fate of civilization and the cosmos"
+        )
+        
+        title_box.insert(0, story_name)
+        genre_box.insert(0, story_genre)
+        num_char_box.insert(0, 1)
+        story_box.insert("1.0", story_text)
+        goal_box.insert(0, story_goal)
+
     def on_submit():
         global DATA
         title = title_box.get()
@@ -344,6 +384,7 @@ def run_mode1():
         num_char = num_char_box.get()
         story = story_box.get("1.0", "end-1c")
         goal = goal_box.get()
+
         try:
             num_char = int(num_char)
         except ValueError:
@@ -356,6 +397,7 @@ def run_mode1():
             "storyline": story,
             "goal": goal
         }
+
         root.destroy()
         for i in range(num_char):
             try:
@@ -370,6 +412,12 @@ def run_mode1():
             client, MODEL_NAME, prompt))
         DATA["target"] = "story"
         DATA["history"].append(["story", beginning_line])
+
+        #Store initial generated passage
+        memComponent.setStoryTitle(DATA['story']['title'])
+        memComponent.initializeStoryMemory(beginning_line, DATA)
+        memComponent.initializeNPCMemory()
+        
         run_generation(beginning_line)
 
     next_button = tk.Button(root, text="Next", font=(
@@ -393,9 +441,13 @@ def run_mode2():
         title = title_box.get()
         try:
             filename = title.replace(" ", "_") + ".json"
+
             with open(filename, 'r') as file:
                 DATA = json.load(file)
+
+
             root.destroy()
+
         except Exception as e:
             messagebox.showerror("Error", f"Unable to open file: {str(e)}")
             return
@@ -421,10 +473,12 @@ def main():
         root, text="CSCI 566 Text To Game Engine", font=("Arial", 24))
     title_label.pack(pady=80)
 
+    #Story Creation
     def run_1():
         select_model("mode1")
         root.destroy()
 
+    #Load Story Creation
     def run_2():
         select_model("mode2")
         root.destroy()
@@ -441,4 +495,8 @@ def main():
 
 
 if __name__ == "__main__":
+    if not PERSIST_DB_ENTRIES:
+        MemoryAgent.debug_clearDB(DB_PATH)
+
+    memComponent = MemoryAgent.MemoryComponentWrapper(EMBEDDING_MODEL)
     main()

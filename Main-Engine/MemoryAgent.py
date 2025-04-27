@@ -113,6 +113,7 @@ class MemoryAgent:
         # Initialize the Chroma client and collection
         self.client = chromadb.PersistentClient(db_path)
         self.embedding_model = SentenceTransformer(embedding_model)
+        self.lastStoryTimePassage = None
 
         # Create or get the collection
         self._collections: dict[str, chromadb.Collection] = {}
@@ -135,80 +136,6 @@ class MemoryAgent:
     def remove_memory(self, collection: str, **kwargs):
         self.get_collection(collection).delete(**kwargs)
 
-    def old_add_memory(self, item_id: str, embeddings: list,  content: str = None, metadata: dict = {}):
-        """
-        Adds a new piece of memory (text + metadata) to the collection.
-        Each memory item has a unique item_id used for future retrieval or updates.
-        """
-        self.collection.add(
-            ids=[item_id],
-            documents=[content],
-            embeddings=embeddings,
-            metadatas=[metadata],            
-        )
-
-        if B_DEBUG_MODE:
-            print(f"[MemoryAgent] Added item_id={item_id} with content='{content}'")
-
-    def old_update_memory(self, item_id: str, new_content: str, new_metadata: dict = None):
-        """
-        Updates memory by first removing the old item, then adding the new content.
-        Alternatively, you could implement a specialized 'update' if your setup allows partial modifications.
-        """
-        # Remove old data
-        self.collection.delete(ids=[item_id])
-
-        # Insert new data
-        self.collection.add(
-            documents=[new_content],
-            metadatas=[new_metadata if new_metadata else {}],
-            ids=[item_id]
-        )
-
-        if B_DEBUG_MODE:
-            print(f"[MemoryAgent] Updated item_id={item_id} with new content='{new_content}'")
-
-    def old_remove_memory(self, item_id: str):
-        """
-        Removes an existing piece of memory from the collection by item_id.
-        """
-        self.collection.delete(ids=[item_id])
-
-        if B_DEBUG_MODE:
-            print(f"[MemoryAgent] Removed item_id={item_id}")
-
-    def old_retrieve_memory(self, collection: str, query: str, n_results: int = 5):
-        """
-        Retrieves the most relevant documents from the collection
-        based on the provided query text, returning up to n_results items.
-        """
-        query_embedding = self.embed_fn.encode(query).tolist()
-
-        results = self.collection.query(
-            query_embeddings=[query_embedding],
-            n_results=n_results
-        )
-
-        # results is a dictionary with 'documents', 'metadatas', 'ids', etc.
-        # For convenience, you can zip them up or just return the full dictionary.
-        
-        # Example: Combine each match into a tuple or dict
-        combined_results = []
-        for doc, meta, mem_id, distance in zip(
-            results["documents"][0],
-            results["metadatas"][0],
-            results["ids"][0],
-            results["distances"][0]
-        ):
-            combined_results.append({
-                "id": mem_id,
-                "document": doc,
-                "metadata": meta,
-                "distance": distance
-            })
-        
-        return combined_results
-    
     def utility_generateDatetimeStr(self):
         """
             Utility function to generate a timestamp to create a unique id for each entry.             
@@ -228,7 +155,16 @@ class MemoryAgent:
         formatted = f"{yy:02d}{mm:02d}{dd:02d}{hh:02d}{min:02d}{ss:02d}"
         
         # Convert to integer
-        return int(formatted)    
+        return int(formatted)
+    
+    def get_last_story_timestamp(self):
+        return self.lastStoryTimePassage
+
+    def saveToJson(self, json_data, file_name):
+        filename = file_name + ".json"
+        file = open(filename, 'w')
+        json.dump(json_data, file, indent=4)
+        file.close()
 
 class StoryAgent(MemoryAgent):
     COLLECTION_NAMES = {}
@@ -250,23 +186,11 @@ class StoryAgent(MemoryAgent):
         for attr, col_name in self.COLLECTION_NAMES.items():
             setattr(self, attr, self.get_collection(col_name))
 
-    def add_story_passage(self, story_passage: str, metadata: dict = {}):        
-        timeStamp = self.utility_generateDatetimeStr()
-        storyPassageId = str(timeStamp)
-
-        self.passages.add(
-            ids=[storyPassageId],
-            documents=[story_passage],
-            metadatas=[metadata]
-        )
-
-        return storyPassageId
-        
-    def dev_extract_story_segment(self, story_passage):
+    def extract_story_segment(self, story_passage):
         model = "llama3-70b-8192"
         client = openai.OpenAI(
             api_key="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",
-            base_url="https://api.groq.com/openai/v1"            
+            base_url="https://api.groq.com/openai/v1"
         )
 
         constraints = [
@@ -274,46 +198,39 @@ class StoryAgent(MemoryAgent):
             # "Maintain consistent snake_case IDs for cross-referencing",
             "Include atmospheric cues as mood tags",
             "Limit event descriptions to 15 words",
-            "Never invent details not present in the text"            
+            "Never invent details not present in the text",
+            "The 'actions' field cannot be blank.",
+            "The player (including 'You') cannot be a 'chars' entry.",
+            "The player (including 'You') cannot be in the 'chars_present' entry."
+            "The dialog attribute, target_character can mention 'player' for dialog directed at the player."
         ]
 
         #Sample input prompt to facilitate few-shot learning.
         test_input = """
-            As the twin suns of the remote outpost set over the dusty horizon, casting a reddish-orange glow over the makeshift 
-            research facility, Elysia 'Starlight' Vaal's eyes remained fixed on the holographic display projected before her. 
-            Her advanced navigation software, affectionately dubbed "Nebula", hummed softly as it crunched massive amounts of 
-            data on the mysterious anomalies that had been plaguing the galaxy.
-
-            Elysia's fingers danced across the console, her mind whirling with theories and hypotheses. A former star 
-            cartographer, she had lost her ship and crew to one of these very anomalies, leaving her with a burning desire to 
-            understand their mechanisms and prevent further disasters. The silence of the outpost was a balm to her soul, 
-            allowing her to focus on her work without distraction.
-
-            The sudden shrill beep of her comms system shattered the peaceful atmosphere. Elysia's instincts kicked in, her 
-            heart rate steady as she reached for the console. A data-packet flickered into existence on the screen, the 
-            transmitted signal weak and garbled.
-
-            "Unidentified vessel...dis...es...tress...," the fractured message read.
-
-            Elysia's eyes narrowed. A distress signal was rare in these isolated regions, and the anomaly-ridden galaxies 
-            made any transmission a gamble. Yet, something about this one resonated with her. Perhaps it was the desperation 
-            that clung to the words like a lifeline, or the faint hint of fear that underscored the fragile signal.
-
-            Her mind racing with possibilities, Elysia called up the nearest constellation charts and began to triangulate 
-            the location of the distressed vessel. The outpost's distant sensors were already picking up anomalies, echoes 
-            of the cosmic phenomena that had ravaged the galaxy. Her advanced navigation software would take some time to 
-            compensate for the interference, but Elysia was convinced that this was no ordinary distress call.
-
-            With a deep breath, she sent a confirmation signal, promising aid to the struggling vessel. The crimson horizon 
-            outside seemed to darken in response, as if the very fabric of the universe was drawing her closer to the heart 
-            of the mystery.
-
-            Elysia smiled wistfully, knowing that her curiosity had gotten the better of her once more. It was time to leave 
-            the comforts of the outpost behind and venture into the great unknown, where the fates of civilizations and the 
-            cosmos hung in delicate balance.
-
-            Little did she know, the next jump would propel her into the midst of a desperate struggle, and the choices she 
-            made would decide the course of human destiny...
+            "Eldora \"Ironhide\" Thorns stood tall beside her caravan, her eyes scanning the bustling border checkpoint with a 
+            mix of scrutiny and calculation. The worn iron pendant around her neck seemed to gleam in the flickering torchlight,
+            a subtle reminder of her former life as a knight of the border patrol. Her reputation for unyielding protection 
+            had earned her the nickname \"Ironhide,\" and she wore it like a badge of honor. As she engaged in hushed 
+            conversation with a gruff border guard, Eldora's stern demeanor was a stark contrast to the warmth of the evening. 
+            The air was thick with the smells of exotic spices and fresh bread, and the sounds of merchants haggling and the 
+            occasional clang of metal on metal filled the air. Yet, Eldora's focus remained fixed on the task at hand: getting 
+            her precious cargo through the checkpoint without raising any unwanted attention.\n\n\"Tell me, Gorvoth,\" she 
+            pressed the guard, her voice low and steady, \"what's the word on the decree? Any changes since I last passed 
+            through?\"\n\nGorvoth, a grizzled veteran with a thick beard and a perpetual scowl, rubbed his chin thoughtfully. 
+            \"Ah, Eldora, you know as well as I do that the Alchemist's Council has been breathing down our necks. The decree 
+            remains unchanged: no magic ores are allowed to leave the kingdom. But,\" he leaned in closer, his voice taking 
+            on a conspiratorial tone, \"I heard rumors of...ah...creative interpretations. For the right price, of course.
+            \"\n\nEldora's eyes narrowed. She had heard similar whispers, but she was skeptical. The last thing she needed
+            was to trust some shadowy figure who might sell her out. \"What's the going rate for these...interpretations?\" 
+            she asked, her hand resting on the hilt of her sword.\n\nGorvoth chuckled, a low, gravelly sound. \"Ah, Eldora, 
+            you know as well as I do that prices are negotiable. But be warned: those who try to smuggle magic ores out 
+            of the kingdom won't be dealt with kindly. The alchemist's eyes are everywhere.\"\n\nEldora's gaze flickered 
+            back to her caravan, where the precious cargo lay hidden beneath layers of canvas and woven blankets. She had 
+            already taken extensive precautions to conceal the ores, but she knew that the alchemist's agents were cunning 
+            and relentless.\n\nAs she pondered her next move, Eldora's eyes met those of a hooded figure lurking at the edge 
+            of the checkpoint. For a fleeting moment, their gazes locked, and Eldora felt a shiver run down her spine. Were 
+            they friend or foe? She made a mental note to keep a watchful eye on this mysterious individual, for in a world 
+            where loyalty was the rarest commodity, appearances could be deceiving."
         """
 
         prompt_template = {
@@ -325,8 +242,9 @@ class StoryAgent(MemoryAgent):
                     "fields": [
                         "id: (name of character without any symbols)",
                         "type: (major character, minor character)",
-                        "attributes: (disposition, current mood)",
-                        "dialog: [(spoken lines)]"
+                        "attributes: (disposition towards player, current mood, cannot be blank)",
+                        "dialog: [{target_character : (spoken_line)}",
+                        "actions: (1-sentence describing what the character is doing)"
                     ]
                 },
                 "key_events": {
@@ -343,44 +261,91 @@ class StoryAgent(MemoryAgent):
                         "type: 'setting'",
                         "description: (physical environment)",
                         "mood: (emotional tone as a single string separated by commas)"
+                        "chars_present: (characters mentioned in story passage except the player (or 'You'), separated by commas)"
                     ]
                 }
             }
         },
         "examples": {
-            # "input_sample": test_input,
+            "input_sample": test_input,
             "output_sample": {                
                 "chars": [
                     {
-                        "id": "Elysia Starlight Vaal",
-                        "type": "character",
+                        "id": "Eldora Ironhide Thorns",
+                        "type": "major character",
                         "attributes": {
-                            "disposition": "determined, curious",
-                            "current_mood": "focused, intrigued"
+                            "disposition": "",
+                            "current_mood": "calculating, stern"
                         },
-                        "dialog": "How can I help you?"
-                    }                    
+                        "dialog": [
+                            {
+                                "target_character": "Gorvoth",
+                                "spoken_line": "Tell me, Gorvoth, what's the word on the decree? Any changes since I last passed through?"
+                            },
+                            {
+                                "target_character": "Gorvoth",
+                                "spoken_line": "What's the going rate for these...interpretations?"
+                            }
+                        ],
+                        "actions": "Engaging in hushed conversation with Gorvoth, scanning the checkpoint"
+                    },
+                    {
+                        "id": "Gorvoth",
+                        "type": "minor character",
+                        "attributes": {
+                            "disposition": "",
+                            "current_mood": "thoughtful, conspiratorial"
+                        },
+                        "dialog": [
+                            {
+                                "target_character": "Eldora",
+                                "spoken_line": "Ah, Eldora, you know as well as I do that the Alchemist's Council has been breathing down our necks. The decree remains unchanged: no magic ores are allowed to leave the kingdom. But, I heard rumors of...ah...creative interpretations. For the right price, of course."
+                            },
+                            {
+                                "target_character": "Eldora",
+                                "spoken_line": "Ah, Eldora, you know as well as I do that prices are negotiable. But be warned: those who try to smuggle magic ores out of the kingdom won't be dealt with kindly. The alchemist's eyes are everywhere."
+                            }
+                        ],
+                        "actions": "Rubbing his chin thoughtfully, leaning in closer"
+                    },
+                    {
+                        "id": "Hooded Figure",
+                        "type": "minor character",
+                        "attributes": {
+                            "disposition": "",
+                            "current_mood": "mysterious"
+                        },
+                        "dialog": [],
+                        "actions": "Lurking at the edge of the checkpoint, watching Eldora"
+                    }
                 ],
                 "key_events": [
                     {
-                        "id": "elysia_receives_distress_signal",
+                        "id": "eldora_meets_gorvoth",
                         "type": "event",
-                        "description": "Elysia intercepts a rare and fragmented distress signal from an unidentified vessel.",
-                        "tags": "distress_signal, mystery, anomalies"
+                        "description": "Eldora engages in conversation with Gorvoth at the border checkpoint.",
+                        "tags": "border_checkpoint, smuggling, magic_ores"
                     },
                     {
-                        "id": "elysia_confirms_aid",
+                        "id": "gorvoth_mentions_rumors",
                         "type": "event",
-                        "description": "Elysia decides to respond to the distress signal, preparing for immediate departure.",
-                        "tags": "decision, departure, danger"
+                        "description": "Gorvoth shares rumors of 'creative interpretations' of the decree.",
+                        "tags": "rumors, smuggling, magic_ores"
+                    },
+                    {
+                        "id": "eldora_notices_hooded_figure",
+                        "type": "event",
+                        "description": "Eldora notices a mysterious hooded figure watching her.",
+                        "tags": "mysterious_figure, suspicion"
                     }
                 ],
                 "setting_atmosphere": [
                     {
-                        "id": "remote_outpost",
+                        "id": "border_checkpoint",
                         "type": "setting",
-                        "description": "An isolated, makeshift research facility bathed in reddish-orange twilight from twin suns.",
-                        "mood": "isolated, tense, foreboding"
+                        "description": "A bustling border checkpoint with torchlight and exotic smells.",
+                        "mood": "tense, suspicious, warm",
+                        "chars_present": "Eldora, Gorvoth, Hooded Figure"
                     }
                 ]
             }
@@ -412,14 +377,39 @@ class StoryAgent(MemoryAgent):
             ) 
 
             segments = json.loads(response.choices[0].message.content)
+
+            if B_DEBUG_MODE:
+                self.saveToJson(segments, "db_segments")
+
             return segments
 
         except Exception as e:
-            print("Prompt operation failed")
+            print(f"Prompt operation failed:\n{e}")
 
             #TODO: Consider running the try block a second time.
             return None
         
+    def add_story_passage(self, story_passage: str, metadata: dict = {}):        
+        timeStamp = self.utility_generateDatetimeStr()
+        storyPassageId = str(timeStamp)
+        self.lastStoryTimePassage = timeStamp
+
+        self.passages.add(
+            ids=storyPassageId,
+            documents=story_passage,
+            metadatas=metadata
+        )
+
+        if B_DEBUG_MODE:
+            base_str_output = "New Story Passage added with the following metadata:\n"
+
+            for key, value in metadata.items():
+                base_str_output += f"{key} : {value}\n"
+            
+            print(base_str_output)
+
+        return storyPassageId
+
     def add_story_metadata(self, json_data, storyPassageId):
         key_events = json_data["key_events"]
         setting_atmosphere = json_data["setting_atmosphere"]
@@ -445,11 +435,15 @@ class StoryAgent(MemoryAgent):
                 } #Add additional metadata if need be.                
             )
 
+            if B_DEBUG_MODE:
+                print(f"Added entity: {entry['id']} : {entry['description']} based on storyPassageId: {storyPassageId}")
+
         setting_embed_str = (
             f"Story Passage ID: {storyPassageId}\n"
             f"Setting ID: {setting_atmosphere[0]['id']}\n"
             f"Description: {setting_atmosphere[0]['description']}\n"
             f"Mood: {setting_atmosphere[0]['mood']}\n"
+            f"Chars Present: {setting_atmosphere[0]["chars_present"]}\n"
         )
 
         self.entities.add(
@@ -460,9 +454,14 @@ class StoryAgent(MemoryAgent):
                 "storyPassageId": storyPassageId,
                 "type": setting_atmosphere[0]["type"], 
                 "description": setting_atmosphere[0]["description"],
-                "mood": setting_atmosphere[0]["mood"]
+                "mood": setting_atmosphere[0]["mood"],
+                "chars_present" : setting_atmosphere[0]["chars_present"]
             } #Add additional metadata if need be.            
         )
+
+        if B_DEBUG_MODE:
+            print(f"Added setting: {setting_atmosphere[0]['id']} : {setting_atmosphere[0]['description']} based on storyPassageId: {storyPassageId}")
+
 
     def get_recent_passages(self, timeStamp, k: int = 1):
         """Gets the k most recent passages, using the time stamp as the search function."""
@@ -471,10 +470,11 @@ class StoryAgent(MemoryAgent):
             query_texts=[str(timeStamp)],
         )
 
+        #Need to reference the first index, otherwise we get a nested array for the output.
         dt_output = {
-            "ids": results["ids"],
-            "documents": results["documents"],
-            "metadatas": results["metadatas"]
+            "ids": results["ids"][0],
+            "documents": results["documents"][0],
+            "metadatas": results["metadatas"][0]
         }
 
         return dt_output
@@ -511,10 +511,24 @@ class NPCAgent(MemoryAgent):
             setattr(self, attr, self.get_collection(col_name))
 
     def add_npcs(self, npc_entries):
-        for key, value in npc_entries['chars'].items():
+        if self.lastStoryTimePassage is None:
+            self.lastStoryTimePassage = self.utility_generateDatetimeStr()
+
+        for value in npc_entries['chars']:
             #Note: If updating the metadata tags, ensure that the embedding_text is also updated.
+            base_embedding_text = ""
+            
+            if value['type'] == 'major character': #A major character is defined as an NPC that was setup before the start of the game.
+                pass
+            elif value['type'] == 'minor character':
+                pass
+            else:
+                print(f"Undefined character type found: {value['type']}")
+
+            ltFields = list(value.keys())
+
             embedding_text = (
-                f"name: {value['name']}\n" 
+                f"name: {value['id']}\n" 
                 f"background: {value['background']}\n" 
                 f"traits: {value['act']}\n"
                 f"knowledge: {value['info']}\n"
@@ -522,7 +536,8 @@ class NPCAgent(MemoryAgent):
                 f"q_react_hello: {value['q_hello']}\n"
                 f"q_react_important: {value['q_important']}\n"
                 f"q_react_help: {value['q_help']}\n"
-                f"q_notes: {value['notes']}\n"
+                f"notes: {value['notes']}\n"
+                f"timeStamp_lastSeen: {self.lastStoryTimePassage}"
             )
             embedding = self.embedding_model.encode(embedding_text)
 
@@ -539,27 +554,281 @@ class NPCAgent(MemoryAgent):
                     "q_hello": value['q_hello'],
                     "q_important": value['q_important'],
                     "q_help": value['q_help'],
-                    "q_notes": value['notes']
+                    "notes": value['notes'],
+                    "timeStamp_lastSeen": self.lastStoryTimePassage
                 }]
             )
 
-    def add_npc_interaction(self, npc_convo_entries, storyPassageId):
+            if B_DEBUG_MODE:
+                print(f"Added NPC_entry {key}: background: {value['background']}, traits: {value['act']}, "
+                      f"timeStamp_lastSeen: {self.lastStoryTimePassage}")
+
+    def add_npc_interaction(self, json_story_summary, storyPassageId):
         """Add NPC conversations extracted from the story passage denoted by the storyPassageId"""
-        for entry in npc_convo_entries['chars']:
-            self.npc_interactions.add(
-                ids=[entry['id']],
-                documents=entry['dialog'],
-                metadatas=[{
-                    "storyPassageId" : storyPassageId 
-                    #Add additional tags as needed.
-                }]
-            )
+        for entry in json_story_summary['chars']:
+            if len(entry['dialog']) > 0:
+                char_name = entry['id']
+
+                for index, line in enumerate(entry['dialog']):
+                    iCurNum = index + 1
+
+                    embedding_text = (
+                        f"name: {char_name}\n" 
+                        f"storyPassageId: {storyPassageId}\n" 
+                        f"dialog: {line['spoken_line']}\n"
+                        f"target_character: {line['target_character']}"                        
+                    )
+
+                    self.npc_interactions.add(
+                        ids=[f"{char_name}_{storyPassageId}_{iCurNum:02}"],
+                        documents=embedding_text,                        
+                        metadatas=[{
+                            "storyPassageId" : str(storyPassageId),
+                            "dialog" : line['spoken_line'],
+                            "target_character": line['target_character']
+                            #Add additional tags as needed.
+                        }]
+                    )
+
+                    if B_DEBUG_MODE:
+                        print(f"Added npc_interaction: char: {char_name}, line: {line['spoken_line']}, "
+                              f"target_character: {line['target_character']}")
 
     def get_NPCs(self, **kwargs):
         result = self.npcs.get(**kwargs)
 
         return result
     
+    def get_NPCs_at_storyPassageId(self, storyPassageId):
+        results = self.npcs.query(
+            query_texts=str(storyPassageId),            
+        )
+
+        #Need to reference the first index, otherwise we get a nested array for the output.
+        dt_output = {
+            "ids": results["ids"][0],
+            "documents": results["documents"][0],
+            "metadatas": results["metadatas"][0]
+        }
+
+        formatted_output = self.format_NPC_data(dt_output)
+
+        return formatted_output
+
+    def format_NPC_data(self, npcs):
+        """
+        Formats the NPC data in preparation for inserting into a prompt.
+
+        Ensure that the npcs parameter is the output generated by get_NPCs_at_storyPassageId.
+        
+        """
+        dt_output = {"chars" : {}}
+        for i in range(len(npcs['ids'])):            
+            dt_entry = {}
+            dt_entry['name'] = npcs['ids'][i]
+            dt_entry['background'] = npcs['metadatas'][i]['background']
+            dt_entry['act'] = npcs['metadatas'][i]['act']
+            dt_entry['info'] = npcs['metadatas'][i]['info']
+            dt_entry['init'] = npcs['metadatas'][i]['init']
+            dt_entry['q_hello'] = npcs['metadatas'][i]['q_hello']
+            dt_entry['q_important'] = npcs['metadatas'][i]['q_important']
+            dt_entry['q_help'] = npcs['metadatas'][i]['q_help']
+            dt_entry['notes'] = npcs['metadatas'][i]['notes']
+
+            # dt_output['chars'].append(dt_entry)
+            dt_output['chars'][dt_entry['name']] = dt_entry
+
+        return dt_output
+    
+class MemoryComponentWrapper:
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    story_memory = None
+    npc_memory = None
+
+    story_title = None
+    timestamp_lastPassage = None
+    json_story_summary = {}
+
+    def __init__(self, embedding_model):
+        self.EMBEDDING_MODEL = embedding_model
+
+    def getLastPassageData(self):
+        timeStamp = self.story_memory.utility_generateDatetimeStr()
+        latest_text = self.story_memory.get_recent_passages(timeStamp)
+        associated_npcs = self.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
+
+        return latest_text, associated_npcs
+        
+    def initializeStoryMemory(self, beginning_line, data):
+        story_title = self.story_title  
+        self.updateJsonData(data)
+
+        story_passages_name = f"story_passages_{story_title}"
+        story_entities_name = f"story_entities_{story_title}"
+
+        self.story_memory = StoryAgent(entities_collection_name=story_entities_name, 
+                                       passages_collection_name=story_passages_name, embedding_model=self.EMBEDDING_MODEL)
+        # self.story_memory = MemoryAgent.StoryAgent(entities_collection_name=story_entities_name, 
+        #                                            passages_collection_name=story_passages_name, 
+        #                                            embedding_model=self.EMBEDDING_MODEL)
+
+        self.AddNewStoryPassage(beginning_line)
+    
+    def initializeNPCMemory(self):
+        story_title = self.story_title
+        npc_collection_name = f"npc_collection_{story_title}"
+        npc_interactions_name = f"npc_interactions_{story_title}"
+
+        self.npc_memory = NPCAgent(npc_collection_name=npc_collection_name,
+                                    npc_interactions_name=npc_interactions_name,
+                                    embedding_model=self.EMBEDDING_MODEL)
+            
+    def setStoryTitle(self, story_title):
+        self.story_title = story_title
+
+    def updateMetadata(self, response, user_text):
+        """
+            This function is called from the on_submit event handler within the
+            GameInterface class.
+        """
+        self.AddNewStoryPassage(response, user_text)
+        self.AddNPCs()
+        self.AddNPCInteractions()
+
+    def updateJsonData(self, data):
+        self.json_story_summary = data
+
+    def AddNewStoryPassage(self, response, user_text=""):
+        self.json_story_summary = self.story_memory.extract_story_segment(response)
+
+        if B_DEBUG_MODE:
+            self.story_memory.saveToJson(self.json_story_summary, self.story_title)
+
+        story_passage_metadata = {            
+            "setting_id": self.json_story_summary ["setting_atmosphere"][0]["id"],
+            "setting_description": self.json_story_summary["setting_atmosphere"][0]["description"],
+            "setting_mood": self.json_story_summary ["setting_atmosphere"][0]["mood"], 
+            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]]),
+            "chars_present": self.json_story_summary["setting_atmosphere"][0]["chars_present"]
+        } 
+
+        #Add additional metadata depending on scenario.
+        if user_text != "":
+            story_passage_metadata["user_prompt"] = user_text
+
+        passageId = self.story_memory.add_story_passage(response, story_passage_metadata)
+        self.story_memory.add_story_metadata(self.json_story_summary, passageId)
+        self.timestamp_lastPassage = passageId
+
+        if B_DEBUG_MODE:
+            print(f"Added story passage with id: {passageId}")
+
+    def AddNPCs(self):
+        self.npc_memory.add_npcs(self.json_story_summary)
+
+    def AddNPCInteractions(self):
+        self.npc_memory.add_npc_interaction(self.json_story_summary, self.timestamp_lastPassage)        
+
+    
+def debug_autoGenNPC():
+        story_name = "Test"
+        story_genre = "Science Fiction"
+        story_text = ("In a fractured galaxy where humanity teeters on extinction after unearthing a volatile alien relic, "
+            "you play a rogue mercenary thrust into a war between rival factions and ancient AI. Your choices determine whether "
+            "to salvage civilization, harness the relic’s reality-bending power, or watch the cosmos collapse."
+        )
+        story_goal = ("The player must decide whether to secure the alien relic to unite the warring factions, exploit its "
+        "power for personal dominance, or let chaos consume the galaxy, shaping the fate of civilization and the cosmos"
+        ) 
+
+        data = {}
+        data["story"] = {
+            "title": story_name.replace(" ", "_"),
+            "genre": story_genre,
+            "storyline": story_text,
+            "goal": story_goal
+        }        
+
+        prompt_template = {
+            "task": "Create an NPC character within the scope of the world defined in 'input_story'. Output the response in the described JSON format.",
+            "requirements": {
+                "name": "Can be either a first name, first name and last name, nickname, or a description",
+                "background": "2 - 3 sentences",
+                "act": "Concise descriptions of personality and mannerisms (example: observant, pragmatic, dry sense of humor)",
+                "info": "2 - 3 sentences",
+                "init": "2 - 3 sentences, describing what the chraacter knows in relation to the story world",
+                "responses": {
+                    "q_hello": "2 sentences describing their typical response when someone says 'hello' to them.",
+                    "q_important": "2 sentences describing their ideas, relationships, or goals most important to them",
+                    "q_help": "2 sentences describing their typical response when someone asks them for help."
+                }
+            },
+            "examples": {
+                "input_sample": {
+                    "genre": "Science Fiction",
+                    "storyline": "In a fractured galaxy where humanity teeters on extinction after unearthing a volatile alien relic, you play a rogue mercenary thrust into a war between rival factions and ancient AI. Your choices determine whether to salvage civilization, harness the relic’s reality-bending power, or watch the cosmos collapse.",
+                    "goal": "The player must decide whether to secure the alien relic to unite the warring factions, exploit its power for personal dominance, or let chaos consume the galaxy, shaping the fate of civilization and the cosmos"
+                },
+                "output_sample": {
+                    "name": "Ronan Kade",
+                    "background": "Ronan Kade is a former Imperial pilot who defected to the outer rim after witnessing atrocities committed by the Empire. Skilled in evasive maneuvers and covert operations, he now works as a freelance pilot and informant, navigating the shady alliances and shifting loyalties of spaceports and smugglers' dens.",
+                    "act": "quiet intensity, observant, pragmatic, guarded in conversation, dry sense of humor",
+                    "info": "Ronan knows Imperial procedures, flight paths, and secret communication frequencies. He has intelligence on hidden supply caches and safe houses scattered along the outer rim and maintains contacts within both rebel factions and black market networks.",
+                    "init": "At the beginning of the story, Ronan Kade is at the same spaceport tavern, quietly seated at the bar observing the interactions between Captain Vorne, Zera-7, and Dr. Marakos. He is waiting for a contact to deliver critical information concerning Imperial patrols.",
+                    "responses": {
+                        "q_hello": "Kade glances briefly, still flipping the token. 'Avoiding Imperial entanglements, same as any day.'",
+                        "q_important": "His eyes darken slightly, the token pausing momentarily. 'Freedom. And keeping a step ahead of the Empire.'",
+                        "q_help" : "He evaluates cautiously, token resuming its dance. 'Depends. Is it likely to get me killed or just nearly?'"
+                    }
+                }
+            },
+            "input_story": data["story"]
+        }
+
+        json_prompt_string = json.dumps(prompt_template)
+        messages = [
+            {
+                "role": "system",
+                "content": "You are a famous storywriter."
+            },
+            {
+                "role": "user",
+                "content": f"JSON Prompt:\n{json_prompt_string}"
+            }   
+        ]
+
+        segments = None
+        model = "mistral-saba-24b"
+        client = openai.OpenAI(
+            api_key="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",
+            base_url="https://api.groq.com/openai/v1"            
+        )
+        
+        try: 
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=0.8,
+                response_format={"type": "json_object"}             
+            ) 
+
+            segments = json.loads(response.choices[0].message.content)
+            return segments
+
+        except Exception as e:
+            print(f"Prompt operation failed: {str(e)}")
+            # messagebox.showerror("Error", f"Character creation failed. Please run auto-gen again: {str(e)}")
+            return 
+
+
+def debug_clearDB(db_path):
+    client = chromadb.PersistentClient(path=db_path)
+
+    collections = client.list_collections()
+
+    for collection in collections:
+        client.delete_collection(collection)    
+
 #Debugging functions
 def debug_addStoryPassageAndMetaData(story_agent, segment_components):
     passage_id = story_agent.add_story_passage(
@@ -580,7 +849,7 @@ def debug_addNPCsAndInteractions(npc_agent, npc_entries, segment_components, sto
     npc_agent.add_npcs(npc_entries)
     npc_agent.add_npc_interaction(segment_components, storyPassageId)
 
-#NOTE: The operations defined in the main function below are intended for debugging purposes.
+#NOTE: The operations defined in the main function below are intended for debugging purposes outside of the Main app.
 if __name__ == "__main__":
     transfomer_model = "all-MiniLM-L6-v2" #Comes default with SentenceTransformer. However, other models can be used.
     db_path = "./chroma_db"
@@ -608,7 +877,7 @@ if __name__ == "__main__":
         embedding_model=transfomer_model
     )
 
-    segment_components = story_collection.dev_extract_story_segment(story_text)
+    segment_components = story_collection.extract_story_segment(story_text)
 
     storyPassageId = debug_addStoryPassageAndMetaData(story_collection, segment_components)
     debug_addNPCsAndInteractions(npc_collection, npc_entries, segment_components, storyPassageId)
@@ -617,8 +886,4 @@ if __name__ == "__main__":
     dt_test_output = story_collection.get_recent_passages(timeStamp)
 
     dt_key_events = story_collection.get_keyEvents(dt_test_output["ids"][0][0])
-    dt_npcs = npc_collection.get_NPCs(query_text="Lyra Kaine")
-
-
-#    query_text = "A high-risk job involving a rogue android"
-#    memory = story_collection.retrieve_memory(query_text, 2)
+    dt_npcs = npc_collection.get_NPCs(ids="Lyra Kaine")
