@@ -64,7 +64,7 @@ def parse_new_characters(story_text, client, data, model_name):
     - role (string): The character's role/background (e.g., "military commander", "scientist", "reporter")
     - characteristics (string): Key personality traits and behaviors (e.g., "brave and strategic", "curious and analytical")
     - backstory (string): Important background information and knowledge the character possesses
-    
+        
     Guidelines:
     1. Include ONLY newly introduced characters that should persist in the story
     2. Make role/background specific and descriptive
@@ -80,7 +80,7 @@ def parse_new_characters(story_text, client, data, model_name):
                 "name": "General Lisa Chen",
                 "role": "Chief Strategist of Earth Defense Force",
                 "characteristics": "Analytical, decisive, and deeply committed to Earth's defense",
-                "backstory": "Expert in alien technology analysis and military strategy, has studied previous alien encounters extensively"
+                "backstory": "Expert in alien technology analysis and military strategy, has studied previous alien encounters extensively"                
             }}
         ]
     }}"""
@@ -94,7 +94,9 @@ def parse_new_characters(story_text, client, data, model_name):
         )
         new_characters = json.loads(
             response.choices[0].message.content).get('characters', [])
+        
         return update_chars(new_characters, data)
+    
     except Exception as e:
         print(f"Character parsing failed: {str(e)}")
         return data
@@ -178,12 +180,15 @@ def story_generation(client, model_name, data, user_text):
 
 def get_starting_prompt(data):
     characters_string = format_characters(data)
-    return f"""Please generate the beginning of a story using the following parameters:
+    return f"""##Please generate the beginning of a story using the following parameters:
                 The genre is: {data["story"]["genre"]}
                 The goal of the main character is: {data["story"]["goal"]}
                 Here is an overview of the storyline: {data["story"]["storyline"]}
+
+                ##Enforce the following constaints:
+                The main character is separate from the characters mentioned in the following section.
                 
-                Please include the following characters with the provided details and starting conditions in a way that feels natural to the story:
+                ##Please include the following characters with the provided details and starting conditions in a way that feels natural to the story:
                 {characters_string}
                 """
 
@@ -250,7 +255,7 @@ def check_goal(client, model_name, data):
             break
 
     latest_story_before_user = None
-    
+
     if last_user_index is not None:
         for i in range(last_user_index - 1, -1, -1):
             if history[i][0] == "story":

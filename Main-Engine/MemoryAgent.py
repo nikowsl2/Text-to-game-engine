@@ -200,9 +200,9 @@ class StoryAgent(MemoryAgent):
             "Limit event descriptions to 15 words",
             "Never invent details not present in the text",
             "The 'actions' field cannot be blank.",
-            "The player (including 'You') cannot be a 'chars' entry.",
-            "The player (including 'You') cannot be in the 'chars_present' entry."
-            "The dialog attribute, target_character can mention 'player' for dialog directed at the player."
+            "The player (including 'You', 'Narrator') cannot be a 'chars' entry.",
+            "The player (including 'You', 'Narrator') cannot be in the 'chars_present' entry."
+            "The dialog attribute, target_character can mention 'player' or 'narrator' for dialog directed at the player."
         ]
 
         #Sample input prompt to facilitate few-shot learning.
@@ -241,10 +241,10 @@ class StoryAgent(MemoryAgent):
                 "chars": {
                     "fields": [
                         "id: (name of character without any symbols)",
-                        "type: (major character, minor character)",
-                        "attributes: (disposition towards player, current mood, cannot be blank)",
+                        # "type: (major character, minor character)",
+                        # "attributes: (disposition towards player, current mood, cannot be blank)",
                         "dialog: [{target_character : (spoken_line)}",
-                        "actions: (1-sentence describing what the character is doing)"
+                        # "actions: (1-sentence describing what the character is doing)"
                     ]
                 },
                 "key_events": {
@@ -272,11 +272,11 @@ class StoryAgent(MemoryAgent):
                 "chars": [
                     {
                         "id": "Eldora Ironhide Thorns",
-                        "type": "major character",
-                        "attributes": {
-                            "disposition": "",
-                            "current_mood": "calculating, stern"
-                        },
+                        # "type": "major character",
+                        # "attributes": {
+                        #     "disposition": "",
+                        #     "current_mood": "calculating, stern"
+                        # },
                         "dialog": [
                             {
                                 "target_character": "Gorvoth",
@@ -512,23 +512,14 @@ class NPCAgent(MemoryAgent):
 
     def add_npcs(self, npc_entries):
         if self.lastStoryTimePassage is None:
-            self.lastStoryTimePassage = self.utility_generateDatetimeStr()
+            self.lastStoryTimePassage = -1
 
-        for value in npc_entries['chars']:
+        for key, value in npc_entries['chars'].items():
             #Note: If updating the metadata tags, ensure that the embedding_text is also updated.
             base_embedding_text = ""
-            
-            if value['type'] == 'major character': #A major character is defined as an NPC that was setup before the start of the game.
-                pass
-            elif value['type'] == 'minor character':
-                pass
-            else:
-                print(f"Undefined character type found: {value['type']}")
-
-            ltFields = list(value.keys())
 
             embedding_text = (
-                f"name: {value['id']}\n" 
+                f"name: {value['name']}\n" 
                 f"background: {value['background']}\n" 
                 f"traits: {value['act']}\n"
                 f"knowledge: {value['info']}\n"
@@ -537,7 +528,7 @@ class NPCAgent(MemoryAgent):
                 f"q_react_important: {value['q_important']}\n"
                 f"q_react_help: {value['q_help']}\n"
                 f"notes: {value['notes']}\n"
-                f"timeStamp_lastSeen: {self.lastStoryTimePassage}"
+                f"timeStamp_lastSeen: {self.lastStoryTimePassage}\n"
             )
             embedding = self.embedding_model.encode(embedding_text)
 
@@ -570,6 +561,9 @@ class NPCAgent(MemoryAgent):
                 char_name = entry['id']
 
                 for index, line in enumerate(entry['dialog']):
+                    if line['spoken_line'] == '':
+                        continue
+                    
                     iCurNum = index + 1
 
                     embedding_text = (
@@ -599,9 +593,10 @@ class NPCAgent(MemoryAgent):
 
         return result
     
-    def get_NPCs_at_storyPassageId(self, storyPassageId):
+    def get_NPCs_at_storyPassageId(self, storyPassageId, num_results=10):
         results = self.npcs.query(
-            query_texts=str(storyPassageId),            
+            query_texts=str(storyPassageId),
+            n_results=num_results
         )
 
         #Need to reference the first index, otherwise we get a nested array for the output.
@@ -647,7 +642,8 @@ class MemoryComponentWrapper:
 
     story_title = None
     timestamp_lastPassage = None
-    json_story_summary = {}
+    json_story_summary = {} #Corresponds to the data object on Main.py
+    extracted_metadata = {}
 
     def __init__(self, embedding_model):
         self.EMBEDDING_MODEL = embedding_model
@@ -668,13 +664,10 @@ class MemoryComponentWrapper:
 
         self.story_memory = StoryAgent(entities_collection_name=story_entities_name, 
                                        passages_collection_name=story_passages_name, embedding_model=self.EMBEDDING_MODEL)
-        # self.story_memory = MemoryAgent.StoryAgent(entities_collection_name=story_entities_name, 
-        #                                            passages_collection_name=story_passages_name, 
-        #                                            embedding_model=self.EMBEDDING_MODEL)
 
         self.AddNewStoryPassage(beginning_line)
     
-    def initializeNPCMemory(self):
+    def initializeNPCMemory(self, data):
         story_title = self.story_title
         npc_collection_name = f"npc_collection_{story_title}"
         npc_interactions_name = f"npc_interactions_{story_title}"
@@ -682,34 +675,36 @@ class MemoryComponentWrapper:
         self.npc_memory = NPCAgent(npc_collection_name=npc_collection_name,
                                     npc_interactions_name=npc_interactions_name,
                                     embedding_model=self.EMBEDDING_MODEL)
+
+        self.AddNPCs(data)     
             
     def setStoryTitle(self, story_title):
         self.story_title = story_title
 
-    def updateMetadata(self, response, user_text):
+    def updateMetadata(self, response, user_text, data):
         """
             This function is called from the on_submit event handler within the
             GameInterface class.
         """
         self.AddNewStoryPassage(response, user_text)
-        self.AddNPCs()
+        self.AddNPCs(data)
         self.AddNPCInteractions()
 
     def updateJsonData(self, data):
         self.json_story_summary = data
 
     def AddNewStoryPassage(self, response, user_text=""):
-        self.json_story_summary = self.story_memory.extract_story_segment(response)
+        self.extracted_metadata = self.story_memory.extract_story_segment(response)
 
         if B_DEBUG_MODE:
             self.story_memory.saveToJson(self.json_story_summary, self.story_title)
 
         story_passage_metadata = {            
-            "setting_id": self.json_story_summary ["setting_atmosphere"][0]["id"],
-            "setting_description": self.json_story_summary["setting_atmosphere"][0]["description"],
-            "setting_mood": self.json_story_summary ["setting_atmosphere"][0]["mood"], 
-            "key_events": ", ".join([event["id"] for event in self.json_story_summary ["key_events"]]),
-            "chars_present": self.json_story_summary["setting_atmosphere"][0]["chars_present"]
+            "setting_id": self.extracted_metadata ["setting_atmosphere"][0]["id"],
+            "setting_description": self.extracted_metadata["setting_atmosphere"][0]["description"],
+            "setting_mood": self.extracted_metadata ["setting_atmosphere"][0]["mood"], 
+            "key_events": ", ".join([event["id"] for event in self.extracted_metadata ["key_events"]]),
+            "chars_present": self.extracted_metadata["setting_atmosphere"][0]["chars_present"]
         } 
 
         #Add additional metadata depending on scenario.
@@ -717,17 +712,18 @@ class MemoryComponentWrapper:
             story_passage_metadata["user_prompt"] = user_text
 
         passageId = self.story_memory.add_story_passage(response, story_passage_metadata)
-        self.story_memory.add_story_metadata(self.json_story_summary, passageId)
+        self.story_memory.add_story_metadata(self.extracted_metadata, passageId)
         self.timestamp_lastPassage = passageId
 
         if B_DEBUG_MODE:
             print(f"Added story passage with id: {passageId}")
 
-    def AddNPCs(self):
-        self.npc_memory.add_npcs(self.json_story_summary)
+    def AddNPCs(self, data=None):        
+        self.npc_memory.add_npcs(data)
+        # self.npc_memory.add_minor_NPCs(self.extracted_metadata)
 
     def AddNPCInteractions(self):
-        self.npc_memory.add_npc_interaction(self.json_story_summary, self.timestamp_lastPassage)        
+        self.npc_memory.add_npc_interaction(self.extracted_metadata, self.timestamp_lastPassage)        
 
     
 def debug_autoGenNPC():

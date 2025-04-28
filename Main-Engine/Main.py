@@ -58,7 +58,8 @@ def get_response_content(response):
 def classifier(client, user_input):
     user_prompt = f"""
                 Given the user's input, determine if they would like to switch from the story generator to conversing with one of the characters or vice-versa.
-                If the user input is directed at the story generator, respond with \"story\".
+                If the user input is directed at the story generator, respond with \"story\".                
+                If the user input contains text surrounded by quotation marks, search for characters mentioned within Conversation History.
                 If the user input is directed at a character, respond with the Character's name. Make sure that the character name you respond with is \
                 part of the following: {list(DATA["chars"].keys())}
                 
@@ -70,10 +71,9 @@ def classifier(client, user_input):
                 clearly wish to continue using the story agent
                 
                 Current conversation agent: John
-                User input: How was your day?
+                User input: \"How was your day?\"
                 Your response: John
-                You respond with John as the user is currently conversing with John and the input is clearly directed at a character, meaning they desire to continue conversing with John
-                
+                You respond with John as the user is currently conversing with John and the input is clearly directed at a character, meaning they desire to continue conversing with John                
                 
                 Context: the bartender's name is Chuck
                 Current conversation agent: story
@@ -170,9 +170,16 @@ def run_generation(beginning_line):
     def on_submit():
         global DATA
         user_text = textbox.get()
+
+        charNames_last_passage = memComponent.getLastPassageData()[0]['metadatas'][0]['chars_present']
+        charInfo_last_passage = memComponent.npc_memory.get_NPCs(ids=[charNames_last_passage])
+
         input_type = get_response_content(classifier(client, user_text)).lower()
+        
         print(input_type)
+        
         response = None
+
         if user_text:
             if input_type == "story":
                 response = get_response_content(story_generation(client, MODEL_NAME, DATA, user_text))
@@ -181,18 +188,19 @@ def run_generation(beginning_line):
                 DATA["history"].append([input_type, response])
                 DATA = parse_new_characters(response,client, DATA, MODEL_NAME)
 
-                memComponent.updateMetadata(response, user_text)
+                memComponent.updateMetadata(response, user_text, DATA)
 
             elif input_type in DATA["chars"].keys():
-                dv = get_dev_message(get_initial_prompt(
-                    DATA, input_type), DATA["history"])                
+                # dv = get_dev_message(get_initial_prompt(
+                #     DATA, input_type), DATA["history"])
+                                    
                 response = get_response_content(get_response(
                     client, MODEL_NAME, DATA, input_type, user_text))
                 
                 DATA["history"].append(["User", user_text])
                 DATA["history"].append([input_type, response])
 
-                memComponent.updateMetadata(response, user_text)
+                memComponent.updateMetadata(response, user_text, DATA)
             else:
                 print(DATA["chars"].keys())
                 
@@ -403,6 +411,8 @@ def run_mode1():
             try:
                 npc = create_char(i)
                 DATA["chars"][npc["name"]] = npc
+                
+
             except Exception as e:
                 messagebox.showerror(
                     "Error", f"Character creation failed: {str(e)}")
@@ -410,13 +420,14 @@ def run_mode1():
         prompt = get_starting_prompt(DATA)
         beginning_line = get_response_content(get_initial_gen(
             client, MODEL_NAME, prompt))
+        
         DATA["target"] = "story"
         DATA["history"].append(["story", beginning_line])
 
         #Store initial generated passage
         memComponent.setStoryTitle(DATA['story']['title'])
         memComponent.initializeStoryMemory(beginning_line, DATA)
-        memComponent.initializeNPCMemory()
+        memComponent.initializeNPCMemory(DATA)
         
         run_generation(beginning_line)
 
