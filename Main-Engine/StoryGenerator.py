@@ -102,8 +102,9 @@ def parse_new_characters(story_text, client, data, model_name):
         return data
 
 
-def story_generation(client, model_name, data, user_text):
+def story_generation(client, model_name, data, user_text, latest_text):
     char_summary = format_characters(data)
+    latest_text_passage = latest_text['documents']
 
     system_prompt = f"""You are a creative writing professional specializing in {data["story"]["genre"]} stories. \
     The user will give you an in progress story and you will continue it in a manner that makes sense given the provided \
@@ -130,7 +131,7 @@ def story_generation(client, model_name, data, user_text):
     8. Never include out-of-story text in parentheses/brackets
     
     Here is the story so far:
-    {get_last_story_segment(data)}
+    {latest_text_passage}
     
     With this set of Non Player Characters:
     {char_summary}

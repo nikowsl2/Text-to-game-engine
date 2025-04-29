@@ -394,8 +394,15 @@ class StoryAgent(MemoryAgent):
         storyPassageId = str(timeStamp)
         self.lastStoryTimePassage = timeStamp
 
+        embedding_str = (f"passageText: {story_passage}\n"
+                         f"Story Passage ID: {timeStamp}\n"
+                        #  f"User Prompt: {metadata[]}\n"
+                         )
+        embedding = self.embedding_model.encode(embedding_str).tolist()
+
         self.passages.add(
             ids=storyPassageId,
+            embeddings=embedding,
             documents=story_passage,
             metadatas=metadata
         )
@@ -410,7 +417,7 @@ class StoryAgent(MemoryAgent):
 
         return storyPassageId
 
-    def add_story_metadata(self, json_data, storyPassageId):
+    def add_story_metadata(self, json_data, storyPassageId, user_input):
         key_events = json_data["key_events"]
         setting_atmosphere = json_data["setting_atmosphere"]
 
@@ -420,6 +427,7 @@ class StoryAgent(MemoryAgent):
                 f"Event ID: {entry['id']}\n"
                 f"Description: {entry['description']}\n"
                 f"Tags: {entry['tags']}\n"
+                f"User Prompt: {user_input}\n"
             )
 
             embedding = self.embedding_model.encode(embed_str).tolist()
@@ -431,7 +439,8 @@ class StoryAgent(MemoryAgent):
                     "storyPassageId": storyPassageId,
                     "type": entry["type"], 
                     "description": entry["description"],
-                    "tags": entry["tags"]
+                    "tags": entry["tags"],
+                    "userPrompt": user_input
                 } #Add additional metadata if need be.                
             )
 
@@ -463,12 +472,16 @@ class StoryAgent(MemoryAgent):
             print(f"Added setting: {setting_atmosphere[0]['id']} : {setting_atmosphere[0]['description']} based on storyPassageId: {storyPassageId}")
 
 
-    def get_recent_passages(self, timeStamp, k: int = 1):
+    def get_recent_passages(self, k: int = 1):
         """Gets the k most recent passages, using the time stamp as the search function."""
-        results = self.passages.query(
-            n_results=k,
-            query_texts=[str(timeStamp)],
-        )
+
+        passageIds = self.passages.get(ids=None, include=['metadatas'])
+
+        if len(passageIds) > 0:
+            recentPassageId = max(passageIds['ids'])
+            results = self.passages.get(ids=recentPassageId, include=['documents', 'metadatas'])
+        else:
+            return None
 
         #Need to reference the first index, otherwise we get a nested array for the output.
         dt_output = {
@@ -510,8 +523,15 @@ class NPCAgent(MemoryAgent):
         for attr, col_name in self.COLLECTION_NAMES.items():
             setattr(self, attr, self.get_collection(col_name))
 
-    def add_npcs(self, npc_entries):
+    def add_npcs(self, npc_entries, bIsInitial=False):
+        """
+        
+            bIsInitial - Represents if the added npcs are part of the initialization process.
+        """
         if self.lastStoryTimePassage is None:
+            self.lastStoryTimePassage = self.utility_generateDatetimeStr()
+        
+        if bIsInitial:
             self.lastStoryTimePassage = -1
 
         for key, value in npc_entries['chars'].items():
@@ -636,6 +656,10 @@ class NPCAgent(MemoryAgent):
         return dt_output
     
 class MemoryComponentWrapper:
+    """
+        Wrapper function to interface the MemoryAgent components with other areas
+        of the app.
+    """
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     story_memory = None
     npc_memory = None
@@ -650,7 +674,7 @@ class MemoryComponentWrapper:
 
     def getLastPassageData(self):
         timeStamp = self.story_memory.utility_generateDatetimeStr()
-        latest_text = self.story_memory.get_recent_passages(timeStamp)
+        latest_text = self.story_memory.get_recent_passages()
         associated_npcs = self.npc_memory.get_NPCs_at_storyPassageId(timeStamp)
 
         return latest_text, associated_npcs
@@ -676,7 +700,7 @@ class MemoryComponentWrapper:
                                     npc_interactions_name=npc_interactions_name,
                                     embedding_model=self.EMBEDDING_MODEL)
 
-        self.AddNPCs(data)     
+        self.AddNPCs(data, bIsInitial=True)     
             
     def setStoryTitle(self, story_title):
         self.story_title = story_title
@@ -685,7 +709,7 @@ class MemoryComponentWrapper:
         """
             This function is called from the on_submit event handler within the
             GameInterface class.
-        """
+        """        
         self.AddNewStoryPassage(response, user_text)
         self.AddNPCs(data)
         self.AddNPCInteractions()
@@ -712,14 +736,14 @@ class MemoryComponentWrapper:
             story_passage_metadata["user_prompt"] = user_text
 
         passageId = self.story_memory.add_story_passage(response, story_passage_metadata)
-        self.story_memory.add_story_metadata(self.extracted_metadata, passageId)
+        self.story_memory.add_story_metadata(self.extracted_metadata, passageId, user_text)
         self.timestamp_lastPassage = passageId
 
         if B_DEBUG_MODE:
             print(f"Added story passage with id: {passageId}")
 
-    def AddNPCs(self, data=None):        
-        self.npc_memory.add_npcs(data)
+    def AddNPCs(self, data=None, bIsInitial=False):        
+        self.npc_memory.add_npcs(data, bIsInitial=bIsInitial)
         # self.npc_memory.add_minor_NPCs(self.extracted_metadata)
 
     def AddNPCInteractions(self):
