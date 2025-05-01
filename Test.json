@@ -1,0 +1,41 @@
+{
+    "chars": [
+        {
+            "id": "Narrator",
+            "type": "major character",
+            "attributes": {
+                "disposition": "",
+                "current_mood": "alert, cautious"
+            },
+            "dialog": [],
+            "actions": "Drawing multi-tool, assessing the situation"
+        },
+        {
+            "id": "Newcomer",
+            "type": "minor character",
+            "attributes": {
+                "disposition": "",
+                "current_mood": "unknown"
+            },
+            "dialog": [],
+            "actions": "Intruding into the maintenance shaft"
+        }
+    ],
+    "key_events": [
+        {
+            "id": "newcomer_arrives",
+            "type": "event",
+            "description": "A newcomer intrudes into the dimly lit maintenance shaft.",
+            "tags": "maintenance_shaft, rival_factions, tension"
+        }
+    ],
+    "setting_atmosphere": [
+        {
+            "id": "maintenance_shaft",
+            "type": "setting",
+            "description": "A dimly lit maintenance shaft with life support systems.",
+            "mood": "tense, heavy, alert",
+            "chars_present": "Narrator, Newcomer"
+        }
+    ]
+}

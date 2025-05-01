@@ -3,6 +3,10 @@ import json
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 
+import MemoryAgent
+
+DEBUG_MODE = True
+
 temp_file = "data.txt"
 
 GPT_api_key = "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"
@@ -15,8 +19,7 @@ def create_char(num):
     # Create the main window
     root = tk.Tk()
     root.title(f"Character creation: CHaracter number {num}")
-    root.geometry("1280x720")
-
+    root.geometry("1280x800")
 
     name_label = tk.Label(root, text="What is the name of your character?")
     name_label.pack(pady=2)
@@ -66,7 +69,7 @@ def create_char(num):
 
     # Function to handle button click
     def on_submit():
-        char_prompt['name'] = name_box.get().lower()
+        char_prompt['name'] = name_box.get()
 
         char_prompt["background"] = bg_box.get("1.0", "end-1c")
         char_prompt["act"] = act_box.get("1.0", "end-1c")
@@ -80,8 +83,26 @@ def create_char(num):
         char_prompt["notes"] = note_box.get("1.0", "end-1c")
 
         root.destroy()
+
+    def run_autogen():
+        segments = MemoryAgent.debug_autoGenNPC()
+
+        if segments is not None:
+            name_box.insert(0, segments["name"])
+            bg_box.insert("1.0", segments["background"])
+            act_box.insert("1.0", segments["act"])
+            info_box.insert("1.0", segments["info"])
+            init_box.insert(0, segments["init"])
+            hello_box.insert("1.0", segments["responses"]["q_hello"])
+            imp_box.insert("1.0", segments["responses"]["q_important"])
+            help_box.insert("1.0", segments["responses"]["q_help"])
+
+    if DEBUG_MODE:
+        autogen_btn = tk.Button(root, text="Autogen", command=run_autogen)        
+        autogen_btn.pack(pady=8)
+
     # Submit button
-    submit_button = tk.Button(root, text="Submit", command=on_submit)
+    submit_button = tk.Button(root, text="Submit", command=on_submit)    
     submit_button.pack(pady=8)
 
     root.mainloop()

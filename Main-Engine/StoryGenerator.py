@@ -1,5 +1,5 @@
 from openai import OpenAI
-import mistralai
+# import mistralai
 import json
 
 
@@ -64,7 +64,7 @@ def parse_new_characters(story_text, client, data, model_name):
     - role (string): The character's role/background (e.g., "military commander", "scientist", "reporter")
     - characteristics (string): Key personality traits and behaviors (e.g., "brave and strategic", "curious and analytical")
     - backstory (string): Important background information and knowledge the character possesses
-    
+        
     Guidelines:
     1. Include ONLY newly introduced characters that should persist in the story
     2. Make role/background specific and descriptive
@@ -80,7 +80,7 @@ def parse_new_characters(story_text, client, data, model_name):
                 "name": "General Lisa Chen",
                 "role": "Chief Strategist of Earth Defense Force",
                 "characteristics": "Analytical, decisive, and deeply committed to Earth's defense",
-                "backstory": "Expert in alien technology analysis and military strategy, has studied previous alien encounters extensively"
+                "backstory": "Expert in alien technology analysis and military strategy, has studied previous alien encounters extensively"                
             }}
         ]
     }}"""
@@ -94,14 +94,17 @@ def parse_new_characters(story_text, client, data, model_name):
         )
         new_characters = json.loads(
             response.choices[0].message.content).get('characters', [])
+        
         return update_chars(new_characters, data)
+    
     except Exception as e:
         print(f"Character parsing failed: {str(e)}")
         return data
 
 
-def story_generation(client, model_name, data, user_text):
+def story_generation(client, model_name, data, user_text, latest_text):
     char_summary = format_characters(data)
+    latest_text_passage = latest_text['documents']
 
     system_prompt = f"""You are a creative writing professional specializing in {data["story"]["genre"]} stories. \
     The user will give you an in progress story and you will continue it in a manner that makes sense given the provided \
@@ -128,7 +131,7 @@ def story_generation(client, model_name, data, user_text):
     8. Never include out-of-story text in parentheses/brackets
     
     Here is the story so far:
-    {get_last_story_segment(data)}
+    {latest_text_passage}
     
     With this set of Non Player Characters:
     {char_summary}
@@ -178,12 +181,15 @@ def story_generation(client, model_name, data, user_text):
 
 def get_starting_prompt(data):
     characters_string = format_characters(data)
-    return f"""Please generate the beginning of a story using the following parameters:
+    return f"""##Please generate the beginning of a story using the following parameters:
                 The genre is: {data["story"]["genre"]}
                 The goal of the main character is: {data["story"]["goal"]}
                 Here is an overview of the storyline: {data["story"]["storyline"]}
+
+                ##Enforce the following constaints:
+                The main character is separate from the characters mentioned in the following section.
                 
-                Please include the following characters with the provided details and starting conditions in a way that feels natural to the story:
+                ##Please include the following characters with the provided details and starting conditions in a way that feels natural to the story:
                 {characters_string}
                 """
 
@@ -205,6 +211,7 @@ def get_initial_gen(client, model_name, prompt):
                 - Strictly avoid phrases like "could be continued" or "next chapter"
                 - Never include out-of-story text in parentheses/brackets
                 - Maintain immersive storytelling only"""
+    
     if model_name == "claude-3-opus-20240229":
         print("claude")
         return client.messages.create(
@@ -249,6 +256,7 @@ def check_goal(client, model_name, data):
             break
 
     latest_story_before_user = None
+
     if last_user_index is not None:
         for i in range(last_user_index - 1, -1, -1):
             if history[i][0] == "story":
@@ -262,25 +270,27 @@ def check_goal(client, model_name, data):
         f"{c['name']}: {c['background']}" for c in chars.values()
     ])
 
-    system_prompt = f"""Analyze the player's action in relation to the goal.
-Storyline: {storyline}
-Current Story Segment: {latest_story_before_user}
-Player's Action: {last_user_prompt}
-Goal of the Story: {goal}
-Characters:
-{character_summaries}
+    system_prompt = f"""
+        Analyze the player's action in relation to the goal.
+        Storyline: {storyline}
+        Current Story Segment: {latest_story_before_user}
+        Player's Action: {last_user_prompt}
+        Goal of the Story: {goal}
+        Characters:
+        {character_summaries}
 
-Determine:
-- If the action progresses towards the goal
-- If the action leads to failure (game over)
-- If the action achieves the goal (win)
+        Determine:
+        - If the action progresses towards the goal
+        - If the action leads to failure (game over)
+        - If the action achieves the goal (win)
 
-Respond in JSON format:
-{{
-    "status": "progress" | "game_over" | "win",
-    "reason": "Brief explanation"
-    "ending_line": A dramatic narrative sentence for win or game_over status, otherwise leave empty.
-}}"""
+        Respond in JSON format:
+        {{
+            "status": "progress" | "game_over" | "win",
+            "reason": "Brief explanation"
+            "ending_line": A dramatic narrative sentence for win or game_over status, otherwise leave empty.
+        }}
+    """
 
     if model_name == "claude-3-opus-20240229":
         response = client.messages.create(
