@@ -452,7 +452,7 @@ class StoryAgent(MemoryAgent):
             f"Setting ID: {setting_atmosphere[0]['id']}\n"
             f"Description: {setting_atmosphere[0]['description']}\n"
             f"Mood: {setting_atmosphere[0]['mood']}\n"
-            f"Chars Present: {setting_atmosphere[0]["chars_present"]}\n"
+            f"Chars Present: {setting_atmosphere[0]['chars_present']}\n"
         )
 
         self.entities.add(
