@@ -12,7 +12,7 @@ from StoryGenerator import get_starting_prompt,get_initial_gen, format_character
 
 #Debugging Flags
 DEBUG_MODE = False
-PERSIST_DB_ENTRIES = False
+PERSIST_DB_ENTRIES = True
 
 HISTORY_FILE = "history.json"
 PROTAGONISTS_FILE = "protagonists.json"
@@ -27,22 +27,22 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 
 client = OpenAI(
-    api_key="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",
+    api_key="",
     base_url="https://api.groq.com/openai/v1"
 )
 deepseek = OpenAI(
-    api_key= "sk-3d29f5f4fee64e2390f2525640f57ba7",
+    api_key= "",
     base_url= "https://api.deepseek.com/"
 )
 DEEPSEEK_MODEL_NAME = "deepseek-chat"
 
-gpt = OpenAI(api_key="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")
+gpt = OpenAI(api_key="")
 GPT_MODEL_NAME = "gpt-4.1-2025-04-14"
 
-claude = anthropic.Anthropic(api_key="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")
+claude = anthropic.Anthropic(api_key="")
 CLAUDE_MODEL_NAME = "claude-3-opus-20240229"
 
-mistral = mistralai.Mistral(api_key="e7DlAIjT1Nen1Bje2Mb9uDarABQ4iOmD")
+mistral = mistralai.Mistral(api_key="")
 MISTRAL_MODEL_NAME = "mistral-large-latest"
 
 def get_client():
